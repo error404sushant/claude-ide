@@ -1,0 +1,145 @@
+<p align="center">
+  <img src="docs/images/icon.png" width="120" alt="Claude IDE icon">
+</p>
+
+<h1 align="center">Claude IDE</h1>
+
+<p align="center">
+  <b>A VS Code (Code - OSS) fork with the real Claude Code agent built in, where every change Claude makes waits for your review, inline.</b><br>
+  Created by <a href="https://github.com/error404sushant">error404sushant</a>
+</p>
+
+<p align="center">
+  <a href="docs/claude-ide-demo.mp4"><img src="docs/claude-ide-demo-poster.jpg" width="820" alt="Watch the Claude IDE demo video (21s)"></a><br>
+  <sub>▶ <a href="docs/claude-ide-demo.mp4">Watch the 21-second demo</a></sub>
+</p>
+
+---
+
+## What it is
+
+Claude IDE is my own editor: a fork of Code - OSS (the open-source core of VS Code) with a Claude panel on the right that runs the **real Claude Code agent** through the Claude Agent SDK. It uses the same agent loop, tools, `CLAUDE.md` files, settings, hooks and MCP servers as the `claude` CLI, and the same session history, so conversations started in the terminal show up here and vice versa.
+
+What makes it different is **how you review what Claude writes**. Claude works freely; every file it touches (including files changed by shell commands) lands in a review stack. You see the old code in red right inside the file, and you accept or reject each change, each file, or everything at once. Nothing is final until you say so.
+
+<p align="center"><img src="docs/inline-review.gif" width="820" alt="Inline review: Claude's change to total() shown with the old line in red, the cursor clicks Accept"></p>
+
+## Why not just use the Claude Code VS Code extension?
+
+The official [Claude Code extension](https://code.claude.com/docs/en/vs-code) is great, and Claude IDE runs the same agent. The difference is the editor around it:
+
+| | Claude Code extension | Claude IDE |
+|---|---|---|
+| **Reviewing edits** | *Manual* mode pauses on each edit and shows a side-by-side diff before it's written; *Auto / Edit automatically* applies edits without review | Claude keeps working; all its edits collect in a **review stack** you go through afterwards, Cursor-style |
+| **Where you review** | A separate diff view per proposed edit | **Inside the real file**: removed lines in red above the new code, per-change **Accept / Reject** buttons, a floating bar (`1 of 4 · Reject File · Accept File · Next file`) |
+| **Scope of review** | The edit being proposed | Every file Claude changed across the whole turn, including files changed by **shell commands** (`sed -i`, codegen, formatters) |
+| **Undo** | Reject the proposed edit; checkpoints to rewind | Reject restores **byte-identical** originals (new files are deleted); per-change undo; **Restore to here** on any message |
+| **Attaching files** | Hold **Shift** while dragging; paste images | Just **drag** files, folders or screenshots onto the chat; paste images too |
+| **Voice** | – | 🎤 Offline dictation (ffmpeg + whisper.cpp), nothing leaves your machine |
+| **The editor itself** | Your VS Code | A dedicated app: warm *Claude IDE Dark* theme, Claude panel on the right by default, no Copilot sign-in prompts, Open VSX extensions |
+
+## A JavaScript change, start to finish
+
+**1. Ask.** Open a project, type what you want. Here: *"Add discount codes to the cart: SAVE10 takes 10% off and FREESHIP removes the shipping fee. Fix total() so it rounds to 2 decimals, and make formatPrice always show 2 decimals."*
+
+![Claude IDE welcome screen with a JavaScript project open](docs/images/01-welcome.png)
+
+**2. Review inline.** Claude edits `cart.js` and `format.js`. New code is green, and each change has **Reject / Accept**. The floating bar shows where you are (`1 of 4`) and jumps between changes and files. The **Claude Changes** list on the left and the chat card on the right show everything that's pending.
+
+![cart.js with Claude's changes highlighted and Accept/Reject buttons on each change](docs/images/02-review.png)
+
+**3. See exactly what was replaced.** Removed lines stay visible in red, struck through, directly above their replacement: here the old `return this.subtotal() + SHIPPING_FEE;` versus the new rounding logic.
+
+![The old return line in red above the new total() implementation](docs/images/03-inline-diff.png)
+
+**4. Accept (or reject) change by change.** After accepting the `total()` change the counter drops to `1 of 3`. **Accept File** (`⌘⏎`) finishes the file and jumps to the next one: `format.js`, with its own inline diff.
+
+| After accepting one change | Next file opens automatically |
+|---|---|
+| ![](docs/images/04-hunk-accepted.png) | ![](docs/images/05-next-file.png) |
+
+**5. Done.** When everything is accepted the chat card switches to **✓ Reviewed**. Rejecting instead restores the original bytes exactly.
+
+![All changes reviewed](docs/images/06-all-reviewed.png)
+
+## More features
+
+**Drag anything into the chat.** Files and folders from the Explorer, editor tabs, or screenshots from Finder: drop them on the panel and they become attachment chips (images are sent to Claude as images). No Shift key, no typing paths. You can also paste screenshots with `⌘V`.
+
+<p align="center"><img src="docs/images/07b-drag-drop-closeup.png" width="420" alt="Chat composer with cart.js, src folder and a screenshot attached"></p>
+
+**Claude asks, you choose.** When Claude needs a decision it shows a question card: single or multiple choice, with a field for your own answer on every question.
+
+<p align="center"><img src="docs/images/08b-questions-closeup.png" width="360" alt="Question card: test runner, cases to cover, where tests live"></p>
+
+**Everything else**
+- **Four permission modes:** *Auto* (apply now, undo per file), *Ask* (stage everything for review), *Ask each edit* (approve before writing), *Plan* (read-only until you approve the plan)
+- **Past conversations** for the open folder, searchable, resumable, shared with the `claude` CLI
+- **Model + effort pickers**, cost and token count per turn, Stop at any time
+- **Current-file chip:** one click to include the open file and your selection
+- **Keyboard:** `⌘⏎` accept file · `⌘⌫` reject file · `⌥⏎` accept change · `⇧⌥⌫` reject change · `⌥]` / `⌥[` next/previous change · `⌘⇧⏎` accept all
+- **Restricted Mode aware:** untrusted folders show a *Trust folder* prompt instead of running the agent
+
+## Install
+
+### Option A: the extension, in any VS Code-based editor
+
+```sh
+cd claude-agent
+npm install
+npm run package                        # → claude-agent.vsix
+code --install-extension claude-agent.vsix
+```
+
+In stock VS Code the review UI uses CodeLens and decorations. The full inline experience (red removed lines, floating review bar, drop-anywhere) needs the Claude IDE app below.
+
+### Option B: build the Claude IDE app (macOS arm64)
+
+```sh
+git clone --depth 1 https://github.com/microsoft/vscode.git vscode-fork
+(cd vscode-fork && npm ci)             # Node 24 (see vscode-fork/.nvmrc)
+./build-app.sh                         # → VSCode-darwin-arm64/Claude IDE.app
+```
+
+`build-app.sh` runs `apply-fork.sh` (branding, icon, default layout and theme, the review UI and drop handling in `fork-patches/`, and the extension built in), builds with `gulp vscode-darwin-arm64`, and signs the app ad-hoc so macOS can grant it microphone access.
+
+**Sign in:** Claude IDE uses your existing Claude Code login (`claude` → `/login`). You can also use an API key: *Claude: Set API Key* (stored in the OS keychain).
+
+**Voice input (optional):** `brew install ffmpeg whisper-cpp` and put a model at `~/.claude-ide/whisper/ggml-base.en.bin` ([download](https://huggingface.co/ggerganov/whisper.cpp)).
+
+## How it works
+
+```
+claude-agent/                  the extension (runs in any VS Code-based editor)
+  src/extension.ts             agent session via @anthropic-ai/claude-agent-sdk, permissions, chat panel, history, attachments
+  src/review.ts                review stack: snapshots before each edit, shell-command change detection, checkpoints,
+                               Changes tree, decorations, commands, persistence across reloads
+  src/hunks.ts                 per-change (hunk) accept / reject, byte-exact
+  src/voice.ts                 offline dictation (ffmpeg + whisper.cpp)
+  media/                       chat panel UI
+  themes/claude-ide-dark.json  the Claude IDE Dark theme
+fork-patches/
+  claudeReview.contribution.ts inline review UI in the editor core (removed-line zones, per-change buttons, floating bar)
+                               and the chat drop handler
+  brand/                       icon + watermark generator
+apply-fork.sh / build-app.sh   turn a Code - OSS checkout into Claude IDE
+docs/                          screenshots, demo video and its source
+```
+
+Before Claude edits a file, a `PreToolUse` hook records the original. The edit then happens for real, so Claude always sees a consistent disk. The review UI compares the original with the current file, and *Accept* / *Reject* either keep the new content or write the original back, per change or per file. Shell commands are handled the same way by diffing a workspace snapshot taken before and after each command.
+
+## Tests
+
+```sh
+cd claude-agent
+npm test        # per-change accept/reject logic
+npm run e2e     # launches VS Code and drives the real agent through 16 end-to-end checks
+```
+
+The end-to-end suite covers staging edits, shell-command changes (`sed -i`), Reject All restoring byte-identical files, per-change accept/reject, persistence across reload, history and resume, Auto mode undo, checkpoints, Stop mid-turn, *Ask each edit*, Plan mode approval, and multiple-choice questions. It runs through a symlinked workspace path on purpose.
+
+## Credits
+
+Created by **[error404sushant](https://github.com/error404sushant)**.
+
+Built on [Code - OSS](https://github.com/microsoft/vscode) (MIT) and the [Claude Agent SDK](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk). Claude and Claude Code are trademarks of Anthropic; this is an independent project, not affiliated with or endorsed by Anthropic.

@@ -1,0 +1,357 @@
+{
+  "name": "claude-agent",
+  "displayName": "Claude Agent",
+  "description": "Claude Code agent panel with inline review of every change, plus the Claude IDE Dark theme",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --outfile=out/extension.js --external:vscode --define:import.meta.url=__importMetaUrl \"--banner:js=const __importMetaUrl=require('url').pathToFileURL(__filename).href;\"",
+    "watch": "npm run build -- --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "e2e": "npm run build && node test/e2e/run.mjs",
+    "package": "npm run build && vsce package --no-dependencies --allow-missing-repository -o claude-agent.vsix"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "claudeIde",
+          "title": "Claude",
+          "icon": "media/claude.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeIde": [
+        {
+          "type": "webview",
+          "id": "claudeIde.chat",
+          "name": "Chat"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "claudeIde.changes",
+          "name": "Claude Changes"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeIde.acceptFile",
+        "title": "Accept File",
+        "category": "Claude",
+        "icon": "$(check)"
+      },
+      {
+        "command": "claudeIde.rejectFile",
+        "title": "Reject File",
+        "category": "Claude",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "claudeIde.acceptAll",
+        "title": "Accept All Changes",
+        "category": "Claude",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "claudeIde.rejectAll",
+        "title": "Reject All Changes",
+        "category": "Claude",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "claudeIde.acceptHunk",
+        "title": "Accept Hunk",
+        "category": "Claude"
+      },
+      {
+        "command": "claudeIde.rejectHunk",
+        "title": "Reject Hunk",
+        "category": "Claude"
+      },
+      {
+        "command": "claudeIde.nextHunk",
+        "title": "Next Change",
+        "category": "Claude",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "claudeIde.prevHunk",
+        "title": "Previous Change",
+        "category": "Claude",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "claudeIde.nextFile",
+        "title": "Next Changed File",
+        "category": "Claude",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "claudeIde.prevFile",
+        "title": "Previous Changed File",
+        "category": "Claude",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "claudeIde.openDiff",
+        "title": "Open Side-by-Side Diff",
+        "category": "Claude",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "claudeIde.review",
+        "title": "Review Changes",
+        "category": "Claude"
+      },
+      {
+        "command": "claudeIde.newChat",
+        "title": "New Chat",
+        "category": "Claude"
+      },
+      {
+        "command": "claudeIde.setApiKey",
+        "title": "Set API Key",
+        "category": "Claude"
+      },
+      {
+        "command": "claudeIde.signIn",
+        "title": "Sign In (Claude Code)",
+        "category": "Claude"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "claudeIde.prevFile",
+          "when": "claudeIde.activeHasPending",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeIde.nextFile",
+          "when": "claudeIde.activeHasPending",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claudeIde.rejectFile",
+          "when": "claudeIde.activeHasPending",
+          "group": "navigation@3"
+        },
+        {
+          "command": "claudeIde.acceptFile",
+          "when": "claudeIde.activeHasPending",
+          "group": "navigation@4"
+        },
+        {
+          "command": "claudeIde.openDiff",
+          "when": "claudeIde.activeHasPending && resourceScheme == file",
+          "group": "navigation@5"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "claudeIde.rejectAll",
+          "when": "view == claudeIde.changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeIde.acceptAll",
+          "when": "view == claudeIde.changes",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "claudeIde.rejectFile",
+          "when": "view == claudeIde.changes && viewItem == pending",
+          "group": "inline@1"
+        },
+        {
+          "command": "claudeIde.acceptFile",
+          "when": "view == claudeIde.changes && viewItem == pending",
+          "group": "inline@2"
+        },
+        {
+          "command": "claudeIde.openDiff",
+          "when": "view == claudeIde.changes && viewItem == pending",
+          "group": "inline@0"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claudeIde.acceptHunk",
+          "when": "false"
+        },
+        {
+          "command": "claudeIde.rejectHunk",
+          "when": "false"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "claudeIde.acceptFile",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "claudeIde.activeHasPending && editorFocus"
+      },
+      {
+        "command": "claudeIde.rejectFile",
+        "key": "ctrl+backspace",
+        "mac": "cmd+backspace",
+        "when": "claudeIde.activeHasPending && editorFocus"
+      },
+      {
+        "command": "claudeIde.acceptAll",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "claudeIde.hasPending"
+      },
+      {
+        "command": "claudeIde.acceptHunk",
+        "key": "alt+enter",
+        "when": "claudeIde.activeHasPending && editorTextFocus"
+      },
+      {
+        "command": "claudeIde.rejectHunk",
+        "key": "shift+alt+backspace",
+        "when": "claudeIde.activeHasPending && editorTextFocus"
+      },
+      {
+        "command": "claudeIde.nextHunk",
+        "key": "alt+]",
+        "when": "claudeIde.activeHasPending"
+      },
+      {
+        "command": "claudeIde.prevHunk",
+        "key": "alt+[",
+        "when": "claudeIde.activeHasPending"
+      },
+      {
+        "command": "claudeIde.nextFile",
+        "key": "ctrl+alt+down",
+        "mac": "alt+cmd+down",
+        "when": "claudeIde.hasPending"
+      }
+    ],
+    "configuration": {
+      "title": "Claude IDE",
+      "properties": {
+        "claudeIde.permissionMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask",
+            "askBeforeEach",
+            "plan"
+          ],
+          "default": "ask",
+          "enumDescriptions": [
+            "Apply immediately (Undo per file)",
+            "Stage every change for review",
+            "Approve each edit before it is written",
+            "Read and propose only"
+          ]
+        },
+        "claudeIde.models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "claude-opus-5-5",
+            "claude-sonnet-5",
+            "claude-fable-5-1",
+            "claude-haiku-4-5-20251001"
+          ]
+        },
+        "claudeIde.defaultModel": {
+          "type": "string",
+          "default": "claude-sonnet-5"
+        },
+        "claudeIde.blockUntilReviewed": {
+          "type": "boolean",
+          "default": false
+        },
+        "claudeIde.authMode": {
+          "type": "string",
+          "enum": [
+            "claudeCode",
+            "apiKey"
+          ],
+          "default": "claudeCode"
+        },
+        "claudeIde.showHunkCodeLens": {
+          "type": "boolean",
+          "default": true
+        },
+        "claudeIde.reviewStyle": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "sideBySide"
+          ],
+          "default": "inline"
+        },
+        "claudeIde.claudePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the claude executable. Empty = auto-detect."
+        },
+        "claudeIde.micDevice": {
+          "type": "string",
+          "default": "",
+          "description": "Microphone name for voice input (ffmpeg avfoundation). Empty = built-in mic."
+        },
+        "claudeIde.whisperModel": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a whisper.cpp model. Empty = ~/.claude-ide/whisper/ggml-base.en.bin"
+        }
+      }
+    },
+    "themes": [
+      {
+        "label": "Claude IDE Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/claude-ide-dark.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.283",
+    "diff": "^8.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Claude reads, edits and runs code, so the agent only works in trusted folders. The theme works everywhere."
+    }
+  },
+  "author": "error404sushant",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/error404sushant/claude-ide.git"
+  },
+  "homepage": "https://github.com/error404sushant/claude-ide"
+}

@@ -1,0 +1,210 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  :root { --bg: #14100E; --cream: #F3E9E0; --muted: #A99A8D; --accent: #E8895A; --accent2: #D9774B; --line: #2C2521; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif; color: var(--cream); -webkit-font-smoothing: antialiased; }
+  #bg { position: absolute; inset: 0; background: radial-gradient(1200px 800px at 70% 30%, #2A201B 0%, #16110F 55%, #0D0A09 100%); }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .abs { position: absolute; }
+  .h1 { font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
+  .cap { font-size: 58px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.08; }
+  .sub { font-size: 30px; color: var(--muted); line-height: 1.35; font-weight: 500; }
+  .accent { color: var(--accent); }
+  .window { position: absolute; border-radius: 16px; overflow: hidden; box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,220,190,0.08); background: #1A1614; }
+  .window img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .zoom { position: absolute; inset: 0; transform-origin: 0 0; }
+  .tile { position: absolute; border-radius: 22%; box-shadow: 0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,215,0.25); }
+  .chip { position: absolute; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-radius: 26px; background: #3A2A22; color: #F4C6A6; font-size: 26px; font-weight: 600; box-shadow: 0 14px 34px rgba(0,0,0,0.5); white-space: nowrap; }
+  .tag { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid rgba(232,137,90,0.45); background: rgba(232,137,90,0.12); color: #F2C09E; font: 600 22px 'SF Mono', Menlo, monospace; }
+  #cursor { position: absolute; width: 44px; height: 44px; z-index: 50; opacity: 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5)); }
+  #ripple { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; border: 4px solid var(--accent); opacity: 0; z-index: 49; }
+</style></head>
+<body>
+<div id="bg"></div>
+
+<!-- 1. Hook -->
+<div class="scene" id="s1">
+  <div class="abs h1" id="s1a" style="left:0; right:0; top:370px; text-align:center; font-size:96px;">Claude just edited 2 files.</div>
+  <div class="abs h1 accent" id="s1b" style="left:0; right:0; top:500px; text-align:center; font-size:96px;">You decide every line.</div>
+</div>
+
+<!-- 2. Reveal -->
+<div class="scene" id="s2">
+  <div class="abs" id="s2logo" style="left:120px; top:330px; width:180px; height:180px;"></div>
+  <div class="abs h1" id="s2t" style="left:120px; top:540px; font-size:104px;">Claude IDE</div>
+  <div class="abs sub" id="s2s" style="left:124px; top:672px; width:560px;">VS Code with the real Claude&nbsp;Code agent built in.</div>
+  <div class="window" id="s2w" style="left:780px; top:200px; width:1040px; height:650px;"><img src="01-welcome.png"></div>
+</div>
+
+<!-- 3. Inline review of a JavaScript change -->
+<div class="scene" id="s3">
+  <div class="abs cap" id="s3c" style="left:100px; top:330px; width:380px;">Every change waits for&nbsp;you.</div>
+  <div class="abs sub" id="s3s" style="left:100px; top:560px; width:380px;">Old code in red. Accept or reject each change.</div>
+  <div class="abs" id="s3tag" style="left:500px; top:70px;"><span class="tag">src/cart.js · discount codes + rounding fix</span></div>
+  <div class="window" id="s3w" style="left:500px; top:140px; width:1320px; height:825px;">
+    <div class="zoom" id="s3z"><img id="s3a" src="03-inline-diff.png"><img id="s3b" src="04-hunk-accepted.png" style="opacity:0"></div>
+  </div>
+</div>
+
+<!-- 4. Drag & drop -->
+<div class="scene" id="s4">
+  <div class="abs cap" id="s4c" style="left:100px; top:330px; width:380px;">Drag it into the&nbsp;chat.</div>
+  <div class="abs sub" id="s4s" style="left:100px; top:500px; width:380px;">Files, folders and screenshots. No Shift key, no typing paths.</div>
+  <div class="window" id="s4w" style="left:500px; top:128px; width:1320px; height:825px;">
+    <div class="zoom" id="s4z"><img id="s4a" src="06-all-reviewed.png"><img id="s4b" src="07-drag-drop.png" style="opacity:0"></div>
+  </div>
+  <div class="chip" id="chip1">📄 cart.js</div>
+  <div class="chip" id="chip2">📁 src</div>
+  <div class="chip" id="chip3">🖼 screenshot.png</div>
+</div>
+
+<!-- 5. Questions -->
+<div class="scene" id="s5">
+  <div class="abs cap" id="s5c" style="left:140px; top:340px; width:760px;">Claude asks.<br><span class="accent">You pick, or type your own.</span></div>
+  <div class="abs sub" id="s5s" style="left:140px; top:560px; width:700px;">Single or multiple choice, with a custom answer on every question.</div>
+  <div class="window" id="s5w" style="left:1140px; top:70px; width:600px; height:940px;">
+    <div class="zoom" id="s5z"><img src="08-questions.png" style="width:2880px; height:1800px; left:-2280px; top:-150px; transform: scale(1); transform-origin: 2280px 150px;"></div>
+  </div>
+</div>
+
+<!-- 6. Outro -->
+<div class="scene" id="s6">
+  <div class="abs" id="s6logo" style="left:870px; top:170px; width:180px; height:180px;"></div>
+  <div class="abs h1" id="s6t" style="left:0; right:0; top:400px; text-align:center; font-size:120px;">Claude IDE</div>
+  <div class="abs sub" id="s6f" style="left:0; right:0; top:560px; text-align:center; font-size:32px; color:#D8C8BA;">Inline review &nbsp;·&nbsp; Drag &amp; drop &nbsp;·&nbsp; Voice input &nbsp;·&nbsp; Checkpoints &nbsp;·&nbsp; Plan mode</div>
+  <div class="abs" id="s6u" style="left:0; right:0; top:660px; text-align:center;"><span class="tag" style="font-size:28px; height:56px; padding:0 26px; border-radius:28px;">github.com/error404sushant/claude-ide</span></div>
+  <div class="abs sub" id="s6b" style="left:0; right:0; top:760px; text-align:center; font-size:28px;">by error404sushant</div>
+</div>
+
+<svg id="cursor" viewBox="0 0 24 24"><path d="M5 3l14 8.2-6.3 1.3 3.6 6.8-2.6 1.4-3.6-6.8L5 18.5z" fill="#fff" stroke="#111" stroke-width="1.2" stroke-linejoin="round"/></svg>
+<div id="ripple"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const p = (t, a, b) => clamp((t - a) / (b - a));               // progress of t through [a, b]
+const outCubic = k => 1 - Math.pow(1 - k, 3);
+const inOut = k => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const outBack = k => { const c = 1.6; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+const set = (el, o) => { for (const k in o) el.style[k] = o[k]; };
+function rise(el, t, a, dur = 0.5, dist = 40) {                // fade + rise in at time a
+  const k = outCubic(p(t, a, a + dur));
+  set(el, { opacity: k, transform: `translateY(${(1 - k) * dist}px)` });
+}
+
+// Scene windows: fade in 0.3s after the cut, fade out 0.25s before the next cut (dip through the background).
+const SCENES = [['s1', 0, 2.4], ['s2', 2.4, 5.4], ['s3', 5.4, 11.4], ['s4', 11.4, 14.4], ['s5', 14.4, 17.4], ['s6', 17.4, 21.01]];
+function envelope(t, a, b, first, last) {
+  if (t < a || t >= b) return 0;
+  const fin = first ? 1 : outCubic(p(t, a, a + 0.3));
+  const fout = last ? 1 : 1 - p(t, b - 0.25, b);
+  return Math.min(fin, fout);
+}
+
+// Tile "C" logo
+const TILES = [[0, 0, '#E8895A', '#C8603A'], [1, 0, '#F2B06A', '#E0874A'], [2, 0, '#D9774B', '#B4532F'], [0, 1, '#E07B4C', '#C05A35'], [0, 2, '#C9673F', '#9E4526'], [1, 2, '#D9774B', '#B4532F'], [2, 2, '#E8895A', '#C8603A']];
+function buildLogo(host, size) {
+  const tile = size * 0.29, gap = size * 0.065;
+  return TILES.map(([c, r, a, b]) => {
+    const d = document.createElement('div');
+    d.className = 'tile';
+    set(d, { left: c * (tile + gap) + 'px', top: r * (tile + gap) + 'px', width: tile + 'px', height: tile + 'px', background: `linear-gradient(${a}, ${b})` });
+    host.appendChild(d);
+    return d;
+  });
+}
+const logo2 = buildLogo($('s2logo'), 180), logo6 = buildLogo($('s6logo'), 180);
+function popTiles(tiles, t, start, step) {
+  tiles.forEach((d, i) => { const k = p(t, start + i * step, start + i * step + 0.35); set(d, { opacity: clamp(k * 3), transform: `scale(${k ? outBack(k) : 0})` }); });
+}
+
+// Screenshot geometry: screenshots are 2880×1800 (1440×900 CSS px at 2×). Windows show them at w/1440 scale.
+function zoomTo(el, winW, k, ox, oy) {                          // zoom around a point given in 1440-space
+  const s = winW / 1440;
+  set(el, { transform: `translate(${ox * s}px, ${oy * s}px) scale(${k}) translate(${-ox * s}px, ${-oy * s}px)` });
+}
+// Zoom by k while gliding 1440-space point (px, py) toward the window centre (b = 0..1). Returns the transform params.
+function focus(el, win, winW, winH, k, px, py, b) {
+  const s = winW / 1440, P = [px * s, py * s];
+  const tx = lerp(P[0], winW / 2, b) - k * P[0], ty = lerp(P[1], winH / 2, b) - k * P[1];
+  set(el, { transform: `translate(${tx}px, ${ty}px) scale(${k})` });
+  return (qx, qy) => [win.offsetLeft + tx + k * qx * s, win.offsetTop + ty + k * qy * s];
+}
+function mapPoint(win, winW, k, ox, oy, px, py) {              // 1440-space point → canvas coords under that zoom
+  const s = winW / 1440;
+  return [win.offsetLeft + ox * s + k * (px - ox) * s, win.offsetTop + oy * s + k * (py - oy) * s];
+}
+const bez = (a, c, b, k) => (1 - k) * (1 - k) * a + 2 * (1 - k) * k * c + k * k * b;
+
+function render(t) {
+  for (const [id, a, b] of SCENES) $(id).style.opacity = envelope(t, a, b, id === 's1', id === 's6');
+  const cursor = $('cursor'), ripple = $('ripple');
+  set(cursor, { opacity: 0 }); set(ripple, { opacity: 0 });
+
+  // 1. Hook
+  rise($('s1a'), t, 0.1, 0.55, 50);
+  rise($('s1b'), t, 0.95, 0.55, 50);
+
+  // 2. Reveal
+  popTiles(logo2, t, 2.5, 0.09);
+  rise($('s2t'), t, 3.0, 0.5, 30);
+  rise($('s2s'), t, 3.3, 0.5, 20);
+  { const k = outCubic(p(t, 3.2, 4.2)); set($('s2w'), { opacity: k, transform: `translateY(${(1 - k) * 90}px) scale(${0.96 + 0.04 * k})` }); }
+
+  // 3. Inline review: zoom into the total() hunk, cursor clicks Accept, accepted state fades in, zoom back out.
+  {
+    const W = 1320, H = 825, win = $('s3w'), btn = [974, 561];
+    rise($('s3c'), t, 5.6, 0.5, 30); rise($('s3s'), t, 6.0, 0.5, 20); rise($('s3tag'), t, 5.7, 0.5, 16);
+    const zin = inOut(p(t, 5.8, 7.6)), zout = inOut(p(t, 9.6, 11.0));
+    const z = zin - zout, k = 1 + 0.75 * z;
+    const map = focus($('s3z'), win, W, H, k, 820, 600, z);
+    $('s3b').style.opacity = p(t, 8.75, 9.0);
+    if (t >= 7.4 && t < 9.7) {
+      const [bx, by] = map(btn[0], btn[1]);
+      const m = inOut(p(t, 7.5, 8.55));
+      const x = lerp(bx + 260, bx, m), y = lerp(by + 220, by, m);
+      const press = t >= 8.6 && t < 8.72 ? 0.85 : 1;
+      set(cursor, { opacity: p(t, 7.4, 7.6) * (1 - p(t, 9.4, 9.7)), left: x - 9 + 'px', top: y - 5 + 'px', transform: `scale(${press})` });
+      const r = p(t, 8.6, 9.2);
+      set(ripple, { opacity: r > 0 && r < 1 ? 1 - r : 0, left: bx + 'px', top: by + 'px', transform: `scale(${0.4 + r})` });
+    }
+  }
+
+  // 4. Drag & drop: chips arc from the Explorer into the composer, then the composer fills in and we zoom to it.
+  {
+    const W = 1320, win = $('s4w');
+    rise($('s4c'), t, 11.6, 0.5, 30); rise($('s4s'), t, 12.0, 0.5, 20);
+    const chips = [['chip1', 11.65, [109, 129]], ['chip2', 11.9, [94, 107]], ['chip3', 12.15, [150, 330]]];
+    const dest = [1290, 700];
+    chips.forEach(([id, start, from]) => {
+      const el = $(id), k = inOut(p(t, start, start + 0.75));
+      const [fx, fy] = mapPoint(win, W, 1, 0, 0, from[0], from[1]), [dx, dy] = mapPoint(win, W, 1, 0, 0, dest[0], dest[1]);
+      const x = bez(fx, (fx + dx) / 2, dx, k), y = bez(fy, Math.min(fy, dy) - 260, dy, k);
+      const vis = t >= start && t < start + 0.85;
+      set(el, { opacity: vis ? (k < 0.9 ? 1 : 1 - p(k, 0.9, 1)) : 0, left: x - 60 + 'px', top: y - 26 + 'px', transform: `scale(${1 - 0.25 * k}) rotate(${(1 - k) * -4}deg)` });
+    });
+    $('s4b').style.opacity = p(t, 12.9, 13.0);
+    const z = inOut(p(t, 13.0, 13.75));
+    focus($('s4z'), win, W, 825, 1 + 1.3 * z, 1292, 712, z);
+  }
+
+  // 5. Questions: card slides up and pans gently.
+  {
+    rise($('s5c'), t, 14.6, 0.5, 30); rise($('s5s'), t, 15.0, 0.5, 20);
+    const k = outCubic(p(t, 14.5, 15.3));
+    set($('s5w'), { opacity: k, transform: `translateY(${(1 - k) * 120}px)` });
+    set($('s5z'), { transform: `translateY(${-160 * inOut(p(t, 15.4, 17.3))}px)` });
+  }
+
+  // 6. Outro
+  popTiles(logo6, t, 17.5, 0.08);
+  rise($('s6t'), t, 18.0, 0.5, 30);
+  rise($('s6f'), t, 18.35, 0.5, 20);
+  rise($('s6u'), t, 18.7, 0.5, 20);
+  rise($('s6b'), t, 19.0, 0.5, 20);
+}
+window.ready = Promise.all([...document.images].map(i => i.decode())).then(() => document.fonts.ready).then(() => (render(0), 'ready'));
+</script>
+</body></html>

@@ -1,0 +1,19 @@
+# Upstream checkout and build output (see README: clone microsoft/vscode into vscode-fork/)
+vscode-fork/
+VSCode-darwin-arm64/
+VSCode-*/
+
+# Extension build / test artifacts
+claude-agent/node_modules/
+claude-agent/out/
+claude-agent/.vscode-test/
+*.vsix
+
+# Video work files (final assets live in docs/)
+brag-output/
+
+.DS_Store
+CLAUDE_IDE_SPEC*.md
+
+# Local scratch files
+login_screen.dart

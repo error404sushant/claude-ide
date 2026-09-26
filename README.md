@@ -80,9 +80,38 @@ The official [Claude Code extension](https://code.claude.com/docs/en/vs-code) is
 - **Keyboard:** `⌘⏎` accept file · `⌘⌫` reject file · `⌥⏎` accept change · `⇧⌥⌫` reject change · `⌥]` / `⌥[` next/previous change · `⌘⇧⏎` accept all
 - **Restricted Mode aware:** untrusted folders show a *Trust folder* prompt instead of running the agent
 
-## Install
+## Download
 
-### Option A: the extension, in any VS Code-based editor
+Get the latest **Claude IDE** from [**Releases**](https://github.com/error404sushant/claude-ide/releases/latest):
+
+| File | For |
+|---|---|
+| `Claude-IDE-…-macOS-arm64.dmg` | macOS on Apple silicon (M1 or later): open it and drag **Claude IDE** into **Applications** |
+| `Claude-IDE-…-macOS-arm64.zip` | Same app as a zip |
+| `claude-agent-….vsix` | Just the extension, for VS Code, Cursor, Antigravity or any VS Code-based editor |
+
+**Before first launch:**
+1. Install [Claude Code](https://code.claude.com/docs/en/setup) and sign in once in a terminal: run `claude`, then `/login`. Claude IDE uses that login; you can also use an API key via *Claude: Set API Key*.
+2. The app is ad-hoc signed, not notarized by Apple, so macOS blocks the first launch. Either right-click **Claude IDE** in Applications → **Open** → **Open**, or run:
+   ```sh
+   xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"
+   ```
+
+**Voice input (optional):** `brew install ffmpeg whisper-cpp` and put a model at `~/.claude-ide/whisper/ggml-base.en.bin` ([download](https://huggingface.co/ggerganov/whisper.cpp)).
+
+## Build from source
+
+**Requirements:** macOS on Apple silicon, Xcode Command Line Tools (`xcode-select --install`), Node 24 (`brew install node@24`), Python 3, Git, and about 12 GB of free disk space.
+
+```sh
+git clone https://github.com/error404sushant/claude-ide.git
+cd claude-ide
+./build-app.sh                         # → VSCode-darwin-arm64/Claude IDE.app
+```
+
+The first run downloads the exact VS Code (Code - OSS 1.140.0) source these patches were written for, installs dependencies and builds, which takes roughly 20 to 40 minutes. `build-app.sh` runs `apply-fork.sh` (branding, icon, default layout and theme, the review UI and drop handling in `fork-patches/`, and the built-in extension), builds with `gulp vscode-darwin-arm64-min`, and signs the app ad-hoc so macOS can grant it microphone access.
+
+**Only the extension:**
 
 ```sh
 cd claude-agent
@@ -91,21 +120,7 @@ npm run package                        # → claude-agent.vsix
 code --install-extension claude-agent.vsix
 ```
 
-In stock VS Code the review UI uses CodeLens and decorations. The full inline experience (red removed lines, floating review bar, drop-anywhere) needs the Claude IDE app below.
-
-### Option B: build the Claude IDE app (macOS arm64)
-
-```sh
-git clone --depth 1 https://github.com/microsoft/vscode.git vscode-fork
-(cd vscode-fork && npm ci)             # Node 24 (see vscode-fork/.nvmrc)
-./build-app.sh                         # → VSCode-darwin-arm64/Claude IDE.app
-```
-
-`build-app.sh` runs `apply-fork.sh` (branding, icon, default layout and theme, the review UI and drop handling in `fork-patches/`, and the extension built in), builds with `gulp vscode-darwin-arm64`, and signs the app ad-hoc so macOS can grant it microphone access.
-
-**Sign in:** Claude IDE uses your existing Claude Code login (`claude` → `/login`). You can also use an API key: *Claude: Set API Key* (stored in the OS keychain).
-
-**Voice input (optional):** `brew install ffmpeg whisper-cpp` and put a model at `~/.claude-ide/whisper/ggml-base.en.bin` ([download](https://huggingface.co/ggerganov/whisper.cpp)).
+In stock VS Code the review UI uses CodeLens and decorations. The full inline experience (red removed lines, floating review bar, drop-anywhere) needs the Claude IDE app.
 
 ## How it works
 

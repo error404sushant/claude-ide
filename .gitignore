@@ -17,3 +17,6 @@ CLAUDE_IDE_SPEC*.md
 
 # Local scratch files
 login_screen.dart
+
+# Release artifacts (uploaded to GitHub Releases, not committed)
+release/

@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="docs/claude-ide-demo.mp4"><img src="docs/claude-ide-demo-poster.jpg" width="820" alt="Watch the Claude IDE demo video (21s)"></a><br>
-  <sub>▶ <a href="docs/claude-ide-demo.mp4">Watch the 21-second demo</a></sub>
+  <img src="docs/claude-ide-demo.gif" width="880" alt="Claude IDE demo: inline review of a JavaScript change, drag and drop into chat, and multiple-choice questions"><br>
+  <sub>🔊 <a href="https://github.com/error404sushant/claude-ide/raw/main/docs/claude-ide-demo.mp4">Download the demo video with sound (MP4, 21 s)</a></sub>
 </p>
 
 ---

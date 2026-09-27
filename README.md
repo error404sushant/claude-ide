@@ -89,14 +89,19 @@ Get the latest **Claude IDE** from [**Releases**](https://github.com/error404sus
 |---|---|
 | `Claude-IDE-…-macOS-arm64.dmg` | macOS on Apple silicon (M1 or later): open it and drag **Claude IDE** into **Applications** |
 | `Claude-IDE-…-macOS-arm64.zip` | Same app as a zip |
+| `Claude-IDE-…-Windows-x64-Setup.exe` | Windows on regular Intel/AMD PCs (installs without admin rights) |
+| `Claude-IDE-…-Windows-arm64-Setup.exe` | Windows on ARM (Surface/Snapdragon PCs, or Parallels/UTM on a Mac) |
+| `Claude-IDE-…-Windows-*-portable.zip` | Windows without installing: unzip and run `Claude IDE.exe` |
 | `claude-agent-….vsix` | Just the extension, for VS Code, Cursor, Antigravity or any VS Code-based editor |
 
 **Before first launch:**
 1. Install [Claude Code](https://code.claude.com/docs/en/setup) and sign in once in a terminal: run `claude`, then `/login`. Claude IDE uses that login; you can also use an API key via *Claude: Set API Key*. On Windows use the native installer (it puts `claude.exe` in `%USERPROFILE%\\.local\\bin`).
-2. The app is ad-hoc signed, not notarized by Apple, so macOS blocks the first launch. Either right-click **Claude IDE** in Applications → **Open** → **Open**, or run:
-   ```sh
-   xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"
-   ```
+2. The apps aren't code-signed yet, so the system warns on first launch.
+   - **macOS:** right-click **Claude IDE** in Applications → **Open** → **Open**, or run:
+     ```sh
+     xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"
+     ```
+   - **Windows:** on "Windows protected your PC" click **More info** → **Run anyway**.
 
 **Voice input (optional):** `brew install ffmpeg whisper-cpp` and put a model at `~/.claude-ide/whisper/ggml-base.en.bin` ([download](https://huggingface.co/ggerganov/whisper.cpp)).
 

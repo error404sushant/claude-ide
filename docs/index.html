@@ -32,7 +32,7 @@
   "alternateName": "Claude IDE code editor",
   "description": "A free, open-source AI code editor for macOS: a VS Code (Code - OSS) fork with a built-in Claude agent where every change waits for your review inline.",
   "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "macOS (Apple silicon)",
+  "operatingSystem": "macOS (Apple silicon), Windows 10/11",
   "softwareVersion": "0.1.0",
   "url": "https://error404sushant.github.io/claude-ide/",
   "downloadUrl": "https://github.com/error404sushant/claude-ide/releases/latest",
@@ -190,10 +190,10 @@
     <h1>The AI code editor where<br><span class="accent">every change waits for you.</span></h1>
     <p class="lede">Claude IDE is a free, open-source code editor built on VS Code with the Claude Code agent built in. <b>Preview every file change Claude Code makes</b>: the old lines in red right inside the file, with <b>Accept</b> and <b>Reject</b> on each change.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download for macOS</a>
+      <a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download for macOS &amp; Windows</a>
       <a class="btn" href="https://github.com/error404sushant/claude-ide">View on GitHub</a>
     </div>
-    <p class="fine">macOS on Apple silicon · Free and open source · Also available as a VS Code extension</p>
+    <p class="fine">macOS (Apple silicon) · Windows (x64 &amp; ARM64) · Free and open source · Also a VS Code extension</p>
     <div class="demo"><img src="claude-ide-demo.gif" width="900" height="506" alt="Claude IDE demo: reviewing an AI edit to a JavaScript file inline, dragging files into the chat and answering Claude's questions"></div>
   </div>
 </header>
@@ -257,12 +257,12 @@
 <section id="download">
   <div class="wrap">
     <h2>Download Claude IDE</h2>
-    <p class="sub">Free for macOS on Apple silicon (M1 or later).</p>
+    <p class="sub">Free for macOS on Apple silicon (M1 or later) and Windows 10/11 (x64 and ARM64).</p>
     <div class="cta" style="justify-content:flex-start"><a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download the latest release</a></div>
     <ol class="steps">
       <li>Install the <code>claude</code> command-line tool and sign in once: run <code>claude</code>, then <code>/login</code>.</li>
-      <li>Open the <code>.dmg</code> and drag <b>Claude IDE</b> into Applications.</li>
-      <li>The app isn't notarized yet, so on first launch right-click it → <b>Open</b> → <b>Open</b>, or run:</li>
+      <li><b>macOS:</b> open the <code>.dmg</code> and drag <b>Claude IDE</b> into Applications. <b>Windows:</b> run <code>Claude-IDE-…-Setup.exe</code> (<code>x64</code> for most PCs, <code>arm64</code> for ARM laptops).</li>
+      <li>The apps aren't code-signed yet. On Windows click <b>More info</b> → <b>Run anyway</b>. On macOS right-click the app → <b>Open</b> → <b>Open</b>, or run:</li>
     </ol>
 <pre>xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"</pre>
     <p class="fine">Prefer your own editor? The <code>.vsix</code> extension works in VS Code, Cursor and other VS Code-based editors.</p>
@@ -284,7 +284,7 @@ cd claude-ide
     <details><summary>What is Claude IDE?</summary><p>An open-source AI code editor for macOS. It's a fork of Code - OSS (the open-source core of VS Code) with a Claude agent panel and an inline review system for every change the AI makes.</p></details>
     <details><summary>Is Claude IDE free?</summary><p>Yes, the editor is free and open source. It uses your existing Claude account or an API key for the AI itself.</p></details>
     <details><summary>Is it a Cursor alternative?</summary><p>Yes. Like Cursor, it lets the AI edit freely and then shows every change inline with Accept and Reject buttons, but it runs the Claude agent with its full set of tools.</p></details>
-    <details><summary>Does it work on Windows or Linux?</summary><p>The app is macOS-only for now. The extension (<code>.vsix</code>) works in VS Code on Windows and Linux.</p></details>
+    <details><summary>Does it work on Windows or Linux?</summary><p>Yes on Windows: there are installers for x64 and ARM64 PCs. Linux isn't packaged yet; the extension (<code>.vsix</code>) works in VS Code on Linux.</p></details>
     <details><summary>Can I use my VS Code extensions?</summary><p>Yes, from the Open VSX registry, which has most popular extensions.</p></details>
   </div>
 </section>

@@ -31,6 +31,11 @@ fi
 (cd "$FORK" && npm run gulp vscode-darwin-arm64-min)
 
 APP="$ROOT/VSCode-darwin-arm64/Claude IDE.app"
+RES="$APP/Contents/Resources/app"
+# Drop Microsoft's Copilot pieces (disabled in Claude IDE): ~500 MB. Remove their integrity checksums too.
+rm -rf "$RES/extensions/copilot" "$RES/out/vs/sessions" "$RES/node_modules.asar.unpacked/@github/copilot-sdk-darwin-arm64"
+node -e "const f=process.argv[1],p=require(f);for(const k of Object.keys(p.checksums||{}))if(k.startsWith('vs/sessions/'))delete p.checksums[k];require('fs').writeFileSync(f,JSON.stringify(p,null,'\t'))" "$RES/product.json"
+touch "$APP"                                          # the build stamps files with 1980; give the app today's date
 # Sign the bundle (ad-hoc) so macOS knows it as "Claude IDE" and can grant it microphone access.
 codesign --force --deep --sign - "$APP"
 echo "Built $APP"

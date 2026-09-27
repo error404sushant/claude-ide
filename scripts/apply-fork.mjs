@@ -98,6 +98,21 @@ patch('build/gulpfile.vscode.ts',
   "const proc = cp.spawn('signtool.exe', ['verify', '/pa', filePath]);\n\t\tproc.on('error', () => resolve(false)); // Claude IDE: unsigned build without signtool",
   'signtool check', /Claude IDE: unsigned build without signtool/);
 
+// 2b3. App metadata (Windows file properties, macOS "Get Info"): Claude IDE is not a Microsoft product.
+// VS Code's MIT license file, which credits Microsoft for the underlying editor, still ships with the app.
+patch('build/lib/electron.ts',
+  "companyName: 'Microsoft Corporation',\n\tcopyright: 'Copyright (C) 2026 Microsoft. All rights reserved',",
+  "companyName: 'error404sushant',\n\tcopyright: 'Copyright (C) 2026 error404sushant',",
+  'app company and copyright', /companyName: 'error404sushant'/);
+patch('build/gulpfile.vscode.ts',
+  "'CompanyName': 'Microsoft Corporation',",
+  "'CompanyName': 'error404sushant',",
+  'Windows file company name', /'CompanyName': 'error404sushant'/);
+patch('build/gulpfile.vscode.ts',
+  "'LegalCopyright': 'Copyright (C) 2026 Microsoft. All rights reserved',",
+  "'LegalCopyright': 'Copyright (C) 2026 error404sushant',",
+  'Windows file copyright', /'LegalCopyright': 'Copyright \(C\) 2026 error404sushant'/);
+
 // 2c. Inline review UI (removed-line zones, per-change Accept/Reject, floating review bar) and chat drop handling.
 copy(path.join(ROOT, 'fork-patches', 'claudeReview.contribution.ts'), f('src/vs/workbench/contrib/claudeReview/browser/claudeReview.contribution.ts'));
 patch('src/vs/workbench/workbench.common.main.ts',

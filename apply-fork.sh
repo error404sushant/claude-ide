@@ -44,6 +44,11 @@ sed -i '' "/\[ChatAIDisabledSettingId\]: {/,/default:/ s/default: false/default:
 sed -i '' 's/throw new Error(`\[prepareBuiltInCopilotRipgrepShim\] Copilot SDK directory not found at ${copilotSdkBase}`);/return;/' \
   "$FORK/build/lib/copilot.ts"
 
+# 2b2. Open-source builds don't ship Microsoft's extension-signature tool, so signature checks can't run
+# ("Cannot verify the extension signature"). Turn the check off by default, like VSCodium.
+sed -i '' "/localize('extensions.verifySignature'/,/default:/ s/default: true/default: false/" \
+  "$FORK/src/vs/workbench/contrib/extensions/browser/extensions.contribution.ts"
+
 # 2c. Inline review UI (removed-line zones, per-hunk Accept/Reject, floating review bar)
 mkdir -p "$FORK/src/vs/workbench/contrib/claudeReview/browser"
 cp "$ROOT/fork-patches/claudeReview.contribution.ts" "$FORK/src/vs/workbench/contrib/claudeReview/browser/"

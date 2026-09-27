@@ -141,7 +141,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
         this.mode = m.value;
         void cfg().update('permissionMode', m.value, vscode.ConfigurationTarget.Global);
         return this.q?.setPermissionMode(SDK_MODE[this.mode]);
-      case 'setFolder': this.folder = m.value; this.newChat(); return this.sendHistory();
+      case 'setFolder': this.folder = m.value; this.newChat(); void this.loadCommands(); return this.sendHistory();
       case 'newChat': return this.newChat();
       case 'history': return this.sendHistory();
       case 'openSession': return this.openSession(m.id);
@@ -192,6 +192,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
     this.postChanges();
     this.postActiveFile();
     this.post({ type: 'trust', ok: vscode.workspace.isTrusted });
+    void this.loadCommands();
     await this.checkAuth();
     // Pick up where you left off: open this folder's most recent conversation once per window.
     if (!this.sessionId && !this.autoResumed && cfg().get('resumeLastConversation', true)) {
@@ -202,7 +203,37 @@ class ChatProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  trusted() { this.post({ type: 'trust', ok: true }); }
+  trusted() { this.post({ type: 'trust', ok: true }); void this.loadCommands(); }
+
+  private async agentEnv() {
+    const env: Record<string, string | undefined> = { ...process.env, PATH: [path.join(os.homedir(), '.local/bin'), '/opt/homebrew/bin', '/usr/local/bin', process.env.PATH].join(':') };
+    if (cfg().get('authMode') === 'apiKey') env.ANTHROPIC_API_KEY = await this.ctx.secrets.get('claudeIde.apiKey');
+    return env;
+  }
+
+  /** Slash commands (built-ins, custom commands, skills, plugins) for the "/" menu, fetched without sending a message. */
+  private commandsCwd?: string;
+  private async loadCommands() {
+    if (this.commandsCwd === this.cwd || !vscode.workspace.isTrusted) return;
+    const cwd = this.commandsCwd = this.cwd;
+    const abort = new AbortController();
+    try {
+      const { query } = await sdk();
+      const idle = (async function* () { await new Promise(r => abort.signal.addEventListener('abort', r)); })();
+      const q = query({ prompt: idle as AsyncIterable<SDKUserMessage>, options: {
+        cwd, abortController: abort, persistSession: false, settingSources: ['user', 'project', 'local'],
+        pathToClaudeCodeExecutable: findClaude(), env: await this.agentEnv(),
+      } });
+      const cmds = await Promise.race([q.supportedCommands(), new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 30000))]);
+      if (cwd === this.cwd) this.postCommands(cmds);
+    } catch (e: any) {
+      log.warn(`could not load slash commands: ${e?.message ?? e}`);
+      if (cwd === this.commandsCwd) this.commandsCwd = undefined;
+    } finally { abort.abort(); }
+  }
+  private postCommands(cmds: { name: string; description: string; argumentHint: string; aliases?: string[]; builtin?: boolean }[]) {
+    this.post({ type: 'commands', commands: cmds.map(c => ({ name: c.name, description: c.description, hint: c.argumentHint, aliases: c.aliases ?? [], builtin: !!c.builtin })) });
+  }
 
   postActiveFile() {
     const u = vscode.window.activeTextEditor?.document.uri;
@@ -393,6 +424,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
   };
 
   async send(text: string, attach: boolean, images: Image[] = [], refs: string[] = []) {
+    log.info(`send ${JSON.stringify(text.slice(0, 80))}`);
     if (!vscode.workspace.isTrusted) return this.post({ type: 'trust', ok: false });
     if (this.q) return this.post({ type: 'error', text: 'Claude is still working. Stop it first.' });
     if (cfg().get('blockUntilReviewed') && this.store.pending().length)
@@ -415,8 +447,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
     if (!this.sessionId) this.title = text.slice(0, 60);
     this.post({ type: 'user', text, turn: this.turn, title: this.title, images, refs });
 
-    const env: Record<string, string | undefined> = { ...process.env, PATH: [path.join(os.homedir(), '.local/bin'), '/opt/homebrew/bin', '/usr/local/bin', process.env.PATH].join(':') };
-    if (cfg().get('authMode') === 'apiKey') env.ANTHROPIC_API_KEY = await this.ctx.secrets.get('claudeIde.apiKey');
+    const env = await this.agentEnv();
 
     const options: Options = {
       cwd: this.cwd,
@@ -458,7 +489,10 @@ class ChatProvider implements vscode.WebviewViewProvider {
           const isNew = this.sessionId !== m.session_id;
           this.sessionId = m.session_id;
           if (isNew) this.post({ type: 'title', text: this.title });
+          void this.q?.supportedCommands().then(c => this.postCommands(c)).catch(() => undefined);
         }
+        if (m.subtype === 'commands_changed') this.postCommands(m.commands);
+        if (m.subtype === 'local_command_output' && !replay) this.post({ type: 'assistantText', text: m.content });
         // Leaving plan mode (plan approved) → continue in Ask mode so edits are staged for review.
         if (m.subtype === 'status' && m.permissionMode && m.permissionMode !== 'plan' && this.mode === 'plan' && !replay) {
           this.mode = 'ask';

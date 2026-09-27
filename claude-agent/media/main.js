@@ -43,7 +43,7 @@ function md(src) {
 }
 
 // ---------- State ----------
-const S = { refs: [], attach: false, activeFile: '', images: [], busy: false, files: [], stripOpen: false, stripIdx: 0, turn: null, stream: null, started: 0, sessions: [], models: [], showHistory: false };
+const S = { commands: [], cmdIdx: 0, cmdMatches: [], refs: [], attach: false, activeFile: '', images: [], busy: false, files: [], stripOpen: false, stripIdx: 0, turn: null, stream: null, started: 0, sessions: [], models: [], showHistory: false };
 
 // ---------- Icons (inline SVG, follow currentColor) ----------
 const ICONS = {
@@ -95,6 +95,7 @@ app.append(
   h('main', { id: 'log' }),
   h('div', { id: 'strip', class: 'strip hidden' }),
   h('footer', {},
+    h('div', { id: 'cmdmenu', class: 'cmdmenu hidden' }),
     h('div', { class: 'composer' },
       h('div', { id: 'attachments', class: 'attachments hidden' }),
       h('textarea', { id: 'input', rows: 1, placeholder: 'Ask Claude to build, fix or explain…', onkeydown: onKey, oninput: e => { onInput(e); autosize(); }, onpaste: onPaste }),
@@ -148,9 +149,60 @@ function submit() {
   renderAttachments();
 }
 function onKey(e) {
+  if (menuOpen()) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); S.cmdIdx = (S.cmdIdx + (e.key === 'ArrowDown' ? 1 : -1) + S.cmdMatches.length) % S.cmdMatches.length; renderMenu(); return; }
+    if (e.key === 'Tab' || (e.key === 'Enter' && !e.shiftKey && !e.isComposing)) { e.preventDefault(); chooseCommand(S.cmdMatches[S.cmdIdx], e.key === 'Enter'); return; }
+    if (e.key === 'Escape') { e.preventDefault(); S.menuClosedFor = $('#input').value; hideMenu(); return; }
+  }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
 }
+
+// ---------- "/" command menu (built-in commands, custom commands, skills, plugins) ----------
+const menuOpen = () => !$('#cmdmenu').classList.contains('hidden');
+const hideMenu = () => $('#cmdmenu').classList.add('hidden');
+function updateMenu() {
+  const t = $('#input'), v = t.value, head = v.slice(0, t.selectionStart);
+  // Only while typing the command name: "/" at the start and no space yet.
+  if (!v.startsWith('/') || /\s/.test(head) || !S.commands.length || S.menuClosedFor === v) { hideMenu(); return; }
+  const q = head.slice(1).toLowerCase();
+  const score = c => {
+    const names = [c.name, ...c.aliases].map(n => n.toLowerCase());
+    if (names.some(n => n.startsWith(q))) return 0;
+    if (names.some(n => n.split(/[:-]/).some(part => part.startsWith(q)))) return 1;
+    return names.some(n => n.includes(q)) || c.description.toLowerCase().includes(q) ? 2 : -1;
+  };
+  S.cmdMatches = S.commands.map(c => [score(c), c]).filter(([sc]) => sc >= 0).sort((a, b) => a[0] - b[0]).map(([, c]) => c).slice(0, 60);
+  if (!S.cmdMatches.length) { hideMenu(); return; }
+  S.cmdIdx = Math.min(S.cmdIdx, S.cmdMatches.length - 1);
+  renderMenu();
+}
+function renderMenu() {
+  const menu = $('#cmdmenu');
+  menu.classList.remove('hidden');
+  menu.replaceChildren(...S.cmdMatches.map((c, i) => {
+    const tag = c.name.includes(':') ? c.name.split(':')[0] : c.builtin ? '' : 'skill';
+    const alias = c.aliases.find(a => a.toLowerCase().startsWith($('#input').value.slice(1).toLowerCase()) && !c.name.startsWith($('#input').value.slice(1)));
+    const row = h('div', { class: 'cmd' + (i === S.cmdIdx ? ' on' : ''), onmousedown: e => { e.preventDefault(); chooseCommand(c, false); } },
+      h('div', { class: 'cmdtop' }, h('span', { class: 'cmdname' }, '/' + c.name), c.hint ? h('span', { class: 'cmdhint' }, c.hint) : null, alias ? h('span', { class: 'cmdhint' }, `(${alias})`) : null, h('span', { class: 'spacer' }), tag ? h('span', { class: 'cmdtag' }, tag) : null),
+      c.description ? h('div', { class: 'cmddesc' }, c.description) : null);
+    return row;
+  }));
+  menu.children[S.cmdIdx]?.scrollIntoView({ block: 'nearest' });
+}
+function chooseCommand(c, enter) {
+  const t = $('#input');
+  const rest = t.value.slice(t.selectionStart).replace(/^\S*/, '').trimStart();
+  t.value = '/' + c.name + ' ' + rest;
+  hideMenu();
+  t.focus();
+  t.selectionStart = t.selectionEnd = t.value.length;
+  autosize();
+  // Enter on a command that takes no arguments runs it right away, like the CLI.
+  if (enter && !c.hint && !rest) submit();
+}
 function onInput(e) {
+  S.cmdIdx = 0;
+  updateMenu();
   if (e.inputType === 'insertText' && e.data === '@') {
     const t = e.target; t.value = t.value.slice(0, t.selectionStart - 1) + t.value.slice(t.selectionStart);
     send('pickFile');
@@ -469,6 +521,7 @@ window.addEventListener('message', ({ data: m }) => {
     case 'mode': $('#mode').value = m.value; break;
     case 'attachImage': addImage(m.image); break;
     case 'addRef': addRef(m.ref); break;
+    case 'commands': S.commands = m.commands.sort((a, b) => a.name.localeCompare(b.name)); updateMenu(); break;
     case 'activeFile': if (m.name !== S.activeFile) S.attach = false; S.activeFile = m.name; renderCtx(); break;
     case 'mic': {
       S.mic = m.state;
@@ -507,4 +560,7 @@ window.addEventListener('drop', e => {
 });
 
 showEmpty();
+$('#input').addEventListener('blur', () => setTimeout(hideMenu, 100));
+$('#input').addEventListener('click', updateMenu);
+
 send('ready');

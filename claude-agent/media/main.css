@@ -175,3 +175,15 @@ button.send.busy { background: var(--vscode-button-secondaryBackground); color: 
 main { overflow-x: hidden; }
 .turn, .steps, .step, .card, .perm, .perm > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .perm pre, .tool pre { overflow-wrap: anywhere; word-break: break-word; }
+
+/* "/" command menu */
+footer { position: relative; }
+.cmdmenu { position: absolute; left: 10px; right: 10px; bottom: calc(100% - 4px); max-height: 300px; overflow-y: auto; z-index: 10; background: var(--vscode-editorWidget-background, var(--surface)); border: 1px solid var(--vscode-editorWidget-border, var(--line)); border-radius: 10px; padding: 4px; box-shadow: 0 -8px 28px var(--vscode-widget-shadow, #0006); }
+.cmd { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.cmd.on, .cmd:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.cmdtop { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.cmdname { font-family: var(--vscode-editor-font-family); font-weight: 600; color: var(--vscode-foreground); white-space: nowrap; }
+.cmd.on .cmdname { color: var(--accent); }
+.cmdhint { font-family: var(--vscode-editor-font-family); font-size: 0.85em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cmdtag { font-size: 0.75em; padding: 0 6px; border-radius: 8px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); white-space: nowrap; }
+.cmddesc { font-size: 0.86em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }

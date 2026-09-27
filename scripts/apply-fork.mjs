@@ -91,6 +91,13 @@ patch('src/vs/workbench/contrib/extensions/browser/extensions.contribution.ts',
   /(localize\('extensions\.verifySignature'[\s\S]*?default: )true/, '$1false', 'extension signature check',
   /localize\('extensions\.verifySignature'[^\n]*\n\s*default: false/);
 
+// 2b2. Windows packaging asks Microsoft's signtool whether files are already signed. Our builds are unsigned and signtool
+// is often not on PATH (e.g. GitHub runners), which crashed the build; treat "no signtool" as "not signed".
+patch('build/gulpfile.vscode.ts',
+  "const proc = cp.spawn('signtool.exe', ['verify', '/pa', filePath]);\n\t\tproc.on('error', reject);",
+  "const proc = cp.spawn('signtool.exe', ['verify', '/pa', filePath]);\n\t\tproc.on('error', () => resolve(false)); // Claude IDE: unsigned build without signtool",
+  'signtool check', /Claude IDE: unsigned build without signtool/);
+
 // 2c. Inline review UI (removed-line zones, per-change Accept/Reject, floating review bar) and chat drop handling.
 copy(path.join(ROOT, 'fork-patches', 'claudeReview.contribution.ts'), f('src/vs/workbench/contrib/claudeReview/browser/claudeReview.contribution.ts'));
 patch('src/vs/workbench/workbench.common.main.ts',

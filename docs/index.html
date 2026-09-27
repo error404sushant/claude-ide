@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude IDE — AI code editor where every change waits for your review</title>
+<meta name="description" content="Claude IDE is a free, open-source AI code editor for macOS: a VS Code fork with a built-in Claude agent. Review every AI edit inline, accept or reject each change, drag files and screenshots into chat. A Cursor-style alternative.">
+<meta name="keywords" content="Claude IDE, AI code editor, AI IDE, VS Code fork, Cursor alternative, Claude agent, inline diff review, accept reject AI changes, AI coding assistant, macOS code editor, open source IDE">
+<meta name="author" content="error404sushant">
+<link rel="canonical" href="https://error404sushant.github.io/claude-ide/">
+<link rel="icon" type="image/png" href="images/icon.png">
+<meta name="theme-color" content="#14100E">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude IDE">
+<meta property="og:title" content="Claude IDE — AI code editor where every change waits for your review">
+<meta property="og:description" content="A VS Code fork with a built-in Claude agent. Old code in red, accept or reject every change, drag files and screenshots into chat. Free and open source.">
+<meta property="og:url" content="https://error404sushant.github.io/claude-ide/">
+<meta property="og:image" content="https://error404sushant.github.io/claude-ide/claude-ide-demo-poster.jpg">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Claude IDE — AI code editor where every change waits for your review">
+<meta name="twitter:description" content="A VS Code fork with a built-in Claude agent. Review every AI edit inline, accept or reject each change. Free and open source.">
+<meta name="twitter:image" content="https://error404sushant.github.io/claude-ide/claude-ide-demo-poster.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Claude IDE",
+  "alternateName": "Claude IDE code editor",
+  "description": "A free, open-source AI code editor for macOS: a VS Code (Code - OSS) fork with a built-in Claude agent where every change waits for your review inline.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS (Apple silicon)",
+  "softwareVersion": "0.1.0",
+  "url": "https://error404sushant.github.io/claude-ide/",
+  "downloadUrl": "https://github.com/error404sushant/claude-ide/releases/latest",
+  "codeRepository": "https://github.com/error404sushant/claude-ide",
+  "image": "https://error404sushant.github.io/claude-ide/claude-ide-demo-poster.jpg",
+  "screenshot": "https://error404sushant.github.io/claude-ide/images/02-review.png",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "error404sushant", "url": "https://github.com/error404sushant" }
+}
+</script>
+
+<style>
+  :root {
+    --bg: #14100E; --surface: #1E1916; --line: #2E2622; --text: #F3E9E0; --muted: #A99A8D;
+    --accent: #E8895A; --accent-strong: #D9774B; --green: #A3C07F; --red: #E0665A;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  nav { display: flex; align-items: center; gap: 24px; padding: 20px 0; }
+  nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); font-size: 18px; }
+  nav .brand img { width: 28px; height: 28px; border-radius: 7px; }
+  nav .links { margin-left: auto; display: flex; gap: 22px; font-size: 15px; }
+  nav .links a { color: var(--muted); }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  header.hero { text-align: center; padding: 56px 0 28px; background: radial-gradient(900px 500px at 50% -10%, #2A201B 0%, transparent 70%); }
+  h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.04; letter-spacing: -0.035em; margin: 0 0 18px; }
+  h1 .accent { color: var(--accent); }
+  .lede { max-width: 720px; margin: 0 auto 30px; color: #D8CABE; font-size: 19px; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 12px; font-weight: 600; font-size: 16px; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
+  .btn:hover { text-decoration: none; border-color: var(--accent); }
+  .btn.primary { background: var(--accent-strong); border-color: var(--accent-strong); color: #FFF4EC; }
+  .btn.primary:hover { background: var(--accent); }
+  .fine { color: var(--muted); font-size: 14px; }
+  .demo { margin: 36px auto 0; max-width: 1000px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 40px 120px rgba(0,0,0,.55); }
+  .demo img { display: block; width: 100%; height: auto; }
+  section { padding: 72px 0 12px; }
+  h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.025em; line-height: 1.1; margin: 0 0 14px; }
+  .sub { color: var(--muted); max-width: 680px; margin: 0 0 32px; }
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .card h3 { margin: 0 0 6px; font-size: 19px; }
+  .card p { margin: 0; color: #CFC2B6; font-size: 16px; }
+  .shot { margin: 0; }
+  .shot img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+  .shot figcaption { color: var(--muted); font-size: 15px; margin-top: 10px; }
+  .row { display: grid; gap: 34px; grid-template-columns: 1.4fr 1fr; align-items: center; margin-bottom: 56px; }
+  .row.flip { grid-template-columns: 1fr 1.4fr; }
+  .row.flip .shot { order: 2; }
+  .row h3 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .row p { color: #CFC2B6; margin: 0 0 10px; }
+  .narrow img { max-width: 360px; margin: 0 auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 15.5px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 14px; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  td.us { color: var(--text); }
+  td.them { color: #BBAFA4; }
+  pre { background: #1A1512; border: 1px solid var(--line); border-radius: 12px; padding: 18px; overflow-x: auto; font: 14.5px/1.55 "SF Mono", Menlo, monospace; color: #F2C09E; }
+  ol.steps { padding-left: 20px; color: #CFC2B6; }
+  ol.steps li { margin-bottom: 8px; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: .92em; background: #241D1A; padding: 1px 6px; border-radius: 5px; }
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details p { color: #CFC2B6; margin: 10px 0 2px; }
+  footer { border-top: 1px solid var(--line); margin-top: 80px; padding: 30px 0 50px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-between; }
+  @media (max-width: 820px) {
+    .row, .row.flip { grid-template-columns: 1fr; }
+    .row.flip .shot { order: 0; }
+    nav .links { display: none; }
+    td:first-child { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#"><img src="images/icon.png" alt="Claude IDE logo"> Claude IDE</a>
+    <div class="links"><a href="#features">Features</a><a href="#compare">Why Claude IDE</a><a href="#download">Download</a><a href="https://github.com/error404sushant/claude-ide">GitHub</a></div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>The AI code editor where<br><span class="accent">every change waits for you.</span></h1>
+    <p class="lede">Claude IDE is a free, open-source code editor built on VS Code with a Claude agent built in. Claude writes the code; you see the old lines in red right inside the file and accept or reject each change.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download for macOS</a>
+      <a class="btn" href="https://github.com/error404sushant/claude-ide">View on GitHub</a>
+    </div>
+    <p class="fine">macOS on Apple silicon · Free and open source · Also available as a VS Code extension</p>
+    <div class="demo"><img src="claude-ide-demo.gif" width="900" height="506" alt="Claude IDE demo: reviewing an AI edit to a JavaScript file inline, dragging files into the chat and answering Claude's questions"></div>
+  </div>
+</header>
+
+<main>
+<section id="features">
+  <div class="wrap">
+    <h2>Review AI edits the way you review a pull request</h2>
+    <p class="sub">Claude works freely. Every file it touches lands in a review stack, and nothing is final until you accept it.</p>
+
+    <div class="row">
+      <figure class="shot"><img src="images/03-inline-diff.png" loading="lazy" width="1600" height="1000" alt="Inline diff in Claude IDE: the removed line in red above the new code, with Accept and Reject buttons"><figcaption>An AI change to <code>total()</code> in a JavaScript cart: the old line in red, the new code in green.</figcaption></figure>
+      <div>
+        <h3>Inline review, inside the real file</h3>
+        <p>Removed lines stay visible in red, struck through, above their replacement. Every change has its own <b>Accept</b> and <b>Reject</b> buttons, and a floating bar shows <code>1 of 4</code> with keyboard shortcuts to move through changes and files.</p>
+        <p>Reject restores the original file byte for byte. New files are removed.</p>
+      </div>
+    </div>
+
+    <div class="row flip">
+      <figure class="shot"><img src="images/02-review.png" loading="lazy" width="1600" height="1000" alt="Claude IDE review stack with the Claude Changes list, per-change buttons and chat panel"><figcaption>Two files changed: the Changes list, per-change buttons and the review bar.</figcaption></figure>
+      <div>
+        <h3>A review stack across every file</h3>
+        <p>All of Claude's edits in a turn, including files changed by shell commands like <code>sed -i</code> or code generators, collect in one list. Accept per change, per file, or everything at once. <b>Restore to here</b> undoes everything after any message.</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h3>Drag anything into the chat</h3><p>Drop files, folders and screenshots from the Explorer or Finder onto the chat panel. No Shift key, no typing paths. Paste screenshots too.</p></div>
+      <div class="card"><h3>Claude asks, you choose</h3><p>When Claude needs a decision it shows a question card: single or multiple choice, with your own answer on every question.</p></div>
+      <div class="card"><h3>Four permission modes</h3><p>Auto, Ask (stage everything for review), Ask each edit, and Plan (read-only until you approve the plan).</p></div>
+      <div class="card"><h3>Offline voice input</h3><p>Dictate prompts with the mic button. Speech is transcribed locally with whisper.cpp; nothing leaves your Mac.</p></div>
+      <div class="card"><h3>History shared with the CLI</h3><p>Uses the same agent, settings, <code>CLAUDE.md</code> files, hooks and MCP servers as the <code>claude</code> command-line tool, with the same conversation history.</p></div>
+      <div class="card"><h3>A calm, focused editor</h3><p>A warm dark theme, the agent panel on the right, no Copilot sign-in prompts, and extensions from Open VSX.</p></div>
+    </div>
+
+    <div class="row" style="margin-top:56px">
+      <figure class="shot narrow"><img src="images/07b-drag-drop-closeup.png" loading="lazy" width="630" height="500" alt="Chat composer with a file, a folder and a screenshot attached by drag and drop"></figure>
+      <figure class="shot narrow"><img src="images/08b-questions-closeup.png" loading="lazy" width="600" height="1700" alt="Question card with single and multiple choice options and a custom answer field" style="max-height:520px;object-fit:cover;object-position:top"></figure>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <h2>How it compares</h2>
+    <p class="sub">Claude IDE runs the same agent as the official VS Code extension. The difference is the editor built around reviewing its work.</p>
+    <table>
+      <thead><tr><th></th><th>Official VS Code extension</th><th>Claude IDE</th></tr></thead>
+      <tbody>
+        <tr><td>Reviewing edits</td><td class="them">Manual mode pauses on each edit with a side-by-side diff; Auto mode applies edits without review</td><td class="us">Claude keeps working; all edits collect in a review stack you go through afterwards, like Cursor</td></tr>
+        <tr><td>Where you review</td><td class="them">A separate diff view per proposed edit</td><td class="us">Inside the real file: removed lines in red, per-change Accept / Reject, a floating review bar</td></tr>
+        <tr><td>Shell command changes</td><td class="them">Not part of the edit review</td><td class="us">Reviewed like any other change</td></tr>
+        <tr><td>Attaching files</td><td class="them">Hold Shift while dragging; paste images</td><td class="us">Just drag files, folders or screenshots; paste images</td></tr>
+        <tr><td>Voice</td><td class="them">—</td><td class="us">Offline dictation</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <h2>Download Claude IDE</h2>
+    <p class="sub">Free for macOS on Apple silicon (M1 or later).</p>
+    <div class="cta" style="justify-content:flex-start"><a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download the latest release</a></div>
+    <ol class="steps">
+      <li>Install the <code>claude</code> command-line tool and sign in once: run <code>claude</code>, then <code>/login</code>.</li>
+      <li>Open the <code>.dmg</code> and drag <b>Claude IDE</b> into Applications.</li>
+      <li>The app isn't notarized yet, so on first launch right-click it → <b>Open</b> → <b>Open</b>, or run:</li>
+    </ol>
+<pre>xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"</pre>
+    <p class="fine">Prefer your own editor? The <code>.vsix</code> extension works in VS Code, Cursor and other VS Code-based editors.</p>
+    <h3 style="margin-top:34px">Build from source</h3>
+<pre>git clone https://github.com/error404sushant/claude-ide.git
+cd claude-ide
+./build-app.sh</pre>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <details><summary>What is Claude IDE?</summary><p>An open-source AI code editor for macOS. It's a fork of Code - OSS (the open-source core of VS Code) with a Claude agent panel and an inline review system for every change the AI makes.</p></details>
+    <details><summary>Is Claude IDE free?</summary><p>Yes, the editor is free and open source. It uses your existing Claude account or an API key for the AI itself.</p></details>
+    <details><summary>Is it a Cursor alternative?</summary><p>Yes. Like Cursor, it lets the AI edit freely and then shows every change inline with Accept and Reject buttons, but it runs the Claude agent with its full set of tools.</p></details>
+    <details><summary>Does it work on Windows or Linux?</summary><p>The app is macOS-only for now. The extension (<code>.vsix</code>) works in VS Code on Windows and Linux.</p></details>
+    <details><summary>Can I use my VS Code extensions?</summary><p>Yes, from the Open VSX registry, which has most popular extensions.</p></details>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Claude IDE · created by <a href="https://github.com/error404sushant">error404sushant</a></span>
+    <span>Claude is a trademark of Anthropic. Claude IDE is an independent project, not affiliated with or endorsed by Anthropic.</span>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /video-source/
+Sitemap: https://error404sushant.github.io/claude-ide/sitemap.xml

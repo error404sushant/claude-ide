@@ -23,18 +23,39 @@ function inline(s) {
     .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
     .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2">$1</a>');
 }
+const cells = row => row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+const isTableSep = line => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line);
+const NUMERIC = /^[-+]?[\d.,]+\s*[kKmMbB%]?\b|^\$[\d.,]+/;
+function table(lines) {
+  const head = cells(lines[0]), body = lines.slice(2).map(cells);
+  // Right-align columns whose body cells are all numbers (token counts, percentages, sizes).
+  const num = head.map((_, i) => body.length > 0 && body.every(r => !r[i] || NUMERIC.test(r[i])));
+  const td = (tag, c, i) => `<${tag}${num[i] ? ' class="num"' : ''}>${inline(c ?? '')}</${tag}>`;
+  return `<div class="mdtable"><table><thead><tr>${head.map((c, i) => td('th', c, i)).join('')}</tr></thead><tbody>${body.map(r => `<tr>${head.map((_, i) => td('td', r[i], i)).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
 function md(src) {
   const out = [];
   const parts = src.split(/^```[^\n]*\n([\s\S]*?)^```\s*$/m);
   parts.forEach((part, i) => {
     if (i % 2) { out.push(`<div class="code"><button class="copy" title="Copy">⧉</button><pre><code>${esc(part)}</code></pre></div>`); return; }
     let list = '';
-    for (const line of part.split('\n')) {
+    const lines = part.split('\n');
+    for (let j = 0; j < lines.length; j++) {
+      const line = lines[j];
+      if (line.trim().startsWith('|') && isTableSep(lines[j + 1] ?? '')) {
+        if (list) { out.push('</ul>'); list = ''; }
+        let end = j + 2;
+        while (end < lines.length && lines[end].trim().startsWith('|')) end++;
+        out.push(table(lines.slice(j, end)));
+        j = end - 1;
+        continue;
+      }
       const li = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)/);
-      if (li) { if (!list) out.push('<ul>'); list = 'ul'; out.push(`<li>${inline(li[1])}</li>`); continue; }
+      if (li && !/^\s*[-*]{3,}\s*$/.test(line)) { if (!list) out.push('<ul>'); list = 'ul'; out.push(`<li>${inline(li[1])}</li>`); continue; }
       if (list) { out.push('</ul>'); list = ''; }
       const hd = line.match(/^(#{1,4})\s+(.*)/);
       if (hd) out.push(`<h${hd[1].length + 2}>${inline(hd[2])}</h${hd[1].length + 2}>`);
+      else if (/^\s*([-*_])\s*\1\s*\1[-*_\s]*$/.test(line)) out.push('<hr>');
       else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
     }
     if (list) out.push('</ul>');

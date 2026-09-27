@@ -187,3 +187,14 @@ footer { position: relative; }
 .cmdhint { font-family: var(--vscode-editor-font-family); font-size: 0.85em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .cmdtag { font-size: 0.75em; padding: 0 6px; border-radius: 8px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); white-space: nowrap; }
 .cmddesc { font-size: 0.86em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+
+/* Markdown tables (e.g. /context output) */
+.mdtable { overflow-x: auto; margin: 8px 0; border: 1px solid var(--line); border-radius: 8px; }
+.mdtable table { border-collapse: collapse; width: 100%; font-size: 0.9em; }
+.mdtable th, .mdtable td { padding: 5px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.mdtable th { color: var(--muted); font-weight: 600; background: color-mix(in srgb, var(--vscode-foreground) 4%, transparent); white-space: nowrap; }
+.mdtable td { overflow-wrap: anywhere; }
+.mdtable tr:last-child td { border-bottom: none; }
+.mdtable tbody tr:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.mdtable .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.step.text hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }

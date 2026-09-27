@@ -319,6 +319,11 @@
           "type": "string",
           "default": "",
           "description": "Path to a whisper.cpp model. Empty = ~/.claude-ide/whisper/ggml-base.en.bin"
+        },
+        "claudeIde.resumeLastConversation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the most recent conversation for the folder when the window opens."
         }
       }
     },

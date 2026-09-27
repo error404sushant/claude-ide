@@ -400,12 +400,18 @@ function ago(t) {
   const s = (Date.now() - t) / 1000;
   return s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`;
 }
+function fmtSize(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0, n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${i === 0 || n >= 100 ? Math.round(n) : n.toFixed(1)} ${units[i]}`;
+}
 function renderHistory() {
   const q = $('#search').value.toLowerCase();
   const list = S.sessions.filter(s => s.title.toLowerCase().includes(q));
   $('#sessions').replaceChildren(...(list.length ? list.map(s => h('div', { class: 'session' + (s.current ? ' current' : ''), onclick: () => { toggleHistory(false); send('openSession', { id: s.id }); } },
     h('div', { class: 'stitle' }, s.title),
-    h('div', { class: 'muted' }, [ago(s.time), s.branch && `⎇ ${s.branch}`, s.size && `${Math.ceil(s.size / 1024)} KB`].filter(Boolean).join(' · ')))) : [h('div', { class: 'muted pad' }, 'No conversations for this folder yet.')]));
+    h('div', { class: 'muted' }, [ago(s.time), s.branch && `⎇ ${s.branch}`, s.size && fmtSize(s.size)].filter(Boolean).join(' · ')))) : [h('div', { class: 'muted pad' }, 'No conversations for this folder yet.')]));
 }
 
 // ---------- Messages from extension ----------
@@ -455,6 +461,8 @@ window.addEventListener('message', ({ data: m }) => {
     case 'permission': permission(m); break;
     case 'question': question(m); break;
     case 'done': done(m); break;
+    case 'scrollBottom': requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); break;
+    case 'note': log.append(h('div', { class: 'step muted note' }, m.text)); break;
     case 'changes': S.files = m.files; S.stripIdx = 0; renderStrip(); refreshCards(); break;
     case 'history': S.sessions = m.sessions; renderHistory(); break;
     case 'insert': { const t = $('#input'); const i = t.selectionStart; t.value = t.value.slice(0, i) + m.text + t.value.slice(i); t.focus(); break; }

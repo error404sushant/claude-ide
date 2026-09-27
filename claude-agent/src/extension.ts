@@ -94,6 +94,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
   private permissionWaiters = new Map<string, (choice: string) => void>();
   private bashSnaps = new Map<string, WorkspaceSnapshot>();
   private historyTimer?: NodeJS.Timeout;
+  private autoResumed = false;
 
   constructor(private ctx: vscode.ExtensionContext, private store: ReviewStore, private ui: ReturnType<typeof registerReviewUi>) {
     store.onChange(() => this.postChanges());
@@ -192,6 +193,13 @@ class ChatProvider implements vscode.WebviewViewProvider {
     this.postActiveFile();
     this.post({ type: 'trust', ok: vscode.workspace.isTrusted });
     await this.checkAuth();
+    // Pick up where you left off: open this folder's most recent conversation once per window.
+    if (!this.sessionId && !this.autoResumed && cfg().get('resumeLastConversation', true)) {
+      this.autoResumed = true;
+      const { listSessions } = await sdk();
+      const latest = (await listSessions({ dir: this.cwd })).sort((a, b) => b.lastModified - a.lastModified)[0];
+      if (latest) await this.openSession(latest.sessionId);
+    }
   }
 
   trusted() { this.post({ type: 'trust', ok: true }); }
@@ -260,8 +268,12 @@ class ChatProvider implements vscode.WebviewViewProvider {
     this.sessionId = id;
     this.title = (info?.customTitle || info?.summary || info?.firstPrompt || 'Chat').slice(0, 60);
     this.post({ type: 'reset', title: this.title });
-    for (const m of msgs) this.render(m as any, true);
+    // Very long conversations (hundreds of MB) would freeze the panel; show the latest part. Claude still has the full history.
+    const MAX = 300;
+    if (msgs.length > MAX) this.post({ type: 'note', text: `Showing the latest ${MAX} of ${msgs.length} messages.` });
+    for (const m of msgs.slice(-MAX)) this.render(m as any, true);
     this.post({ type: 'done', replay: true });
+    this.post({ type: 'scrollBottom' });
   }
 
   private async pickFile(inline = true) {

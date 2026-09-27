@@ -1,0 +1,63 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Attach the installers to this existing release (for example v0.1.1). Leave empty to only produce downloads on the run page.
+        required: false
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Windows ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-2022, arch: x64 }
+          - { os: windows-11-arm, arch: arm64 }
+    steps:
+      - name: Allow long paths (VS Code has deep node_modules)
+        run: git config --system core.longpaths true
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Claude IDE (downloads Code - OSS, applies patches, builds the installer)
+        run: node scripts/build.mjs --arch ${{ matrix.arch }} --package
+
+      - name: Launch test (window opens, Claude panel loads, no warnings)
+        run: node scripts/smoke-test.mjs --arch ${{ matrix.arch }}
+
+      - name: Upload installer and screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Claude-IDE-Windows-${{ matrix.arch }}
+          path: |
+            release/*Setup.exe
+            release/*portable.zip
+            smoke/*.png
+          if-no-files-found: ignore
+          compression-level: 0
+
+      - name: Attach to release
+        if: github.event_name == 'push' || inputs.release_tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.release_tag || github.ref_name }}" release/*Windows* --clobber

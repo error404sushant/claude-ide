@@ -20,3 +20,6 @@ login_screen.dart
 
 # Release artifacts (uploaded to GitHub Releases, not committed)
 release/
+
+# Launch-test screenshots (scripts/smoke-test.mjs)
+smoke/

@@ -75,6 +75,24 @@ if __name__ == '__main__':
             icon(px).save(os.path.join(iconset, f'icon_{size}x{size}{"@2x" if scale == 2 else ""}.png'))
     subprocess.run(['iconutil', '-c', 'icns', iconset, '-o', os.path.join(HERE, 'claude-ide.icns')], check=True)
     shutil.rmtree(iconset)
+    # Windows: app icon, Start-menu tiles, installer wizard images (sizes match resources/win32 in Code - OSS)
+    os.makedirs(os.path.join(HERE, 'win32'), exist_ok=True)
+    big.save(os.path.join(HERE, 'win32', 'code.ico'), sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    for px in (70, 150):
+        icon(px * 2).resize((px, px), Image.LANCZOS).save(os.path.join(HERE, 'win32', f'code_{px}x{px}.png'))
+    for pct in (100, 125, 150, 175, 200, 225, 250):
+        k = pct / 100
+        w, h = round(164 * k), round(314 * k)                      # big wizard panel: charcoal with the logo
+        panel = gradient((w, h), '#2E2622', '#161211')
+        logo = icon(1024).crop((100, 100, 924, 924)).resize((round(w * 0.62),) * 2, Image.LANCZOS)
+        panel.paste(logo, ((w - logo.width) // 2, round(h * 0.28)), logo)
+        panel.save(os.path.join(HERE, 'win32', f'inno-big-{pct}.bmp'))
+        sm = round(55 * k)                                         # small header image: the logo tile
+        small = Image.new('RGB', (sm, sm), '#FFFFFF')
+        tile = icon(1024).crop((100, 100, 924, 924)).resize((sm, sm), Image.LANCZOS)
+        small.paste(tile, (0, 0), tile)
+        small.save(os.path.join(HERE, 'win32', f'inno-small-{pct}.bmp'))
+    icon(512).save(os.path.join(HERE, 'linux-code.png'))          # Linux app icon
     for name, fill, op in [('letterpress-dark.svg', '#FFFFFF', 0.07), ('letterpress-light.svg', '#000000', 0.07),
                            ('letterpress-hcDark.svg', '#FFFFFF', 0.4), ('letterpress-hcLight.svg', '#000000', 0.4)]:
         open(os.path.join(HERE, name), 'w').write(svg(fill, op))

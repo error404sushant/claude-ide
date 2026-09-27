@@ -92,7 +92,7 @@ Get the latest **Claude IDE** from [**Releases**](https://github.com/error404sus
 | `claude-agent-….vsix` | Just the extension, for VS Code, Cursor, Antigravity or any VS Code-based editor |
 
 **Before first launch:**
-1. Install [Claude Code](https://code.claude.com/docs/en/setup) and sign in once in a terminal: run `claude`, then `/login`. Claude IDE uses that login; you can also use an API key via *Claude: Set API Key*.
+1. Install [Claude Code](https://code.claude.com/docs/en/setup) and sign in once in a terminal: run `claude`, then `/login`. Claude IDE uses that login; you can also use an API key via *Claude: Set API Key*. On Windows use the native installer (it puts `claude.exe` in `%USERPROFILE%\\.local\\bin`).
 2. The app is ad-hoc signed, not notarized by Apple, so macOS blocks the first launch. Either right-click **Claude IDE** in Applications → **Open** → **Open**, or run:
    ```sh
    xattr -dr com.apple.quarantine "/Applications/Claude IDE.app"
@@ -102,15 +102,27 @@ Get the latest **Claude IDE** from [**Releases**](https://github.com/error404sus
 
 ## Build from source
 
-**Requirements:** macOS on Apple silicon, Xcode Command Line Tools (`xcode-select --install`), Node 24 (`brew install node@24`), Python 3, Git, and about 12 GB of free disk space.
+The same scripts build on macOS and Windows. The first run downloads the exact VS Code (Code - OSS 1.140.0) source these patches were written for, installs dependencies and builds, which takes roughly 20 to 40 minutes and about 12 GB of disk.
+
+**macOS (Apple silicon)**: Xcode Command Line Tools (`xcode-select --install`), Node 24 (`brew install node@24`), Python 3, Git.
 
 ```sh
 git clone https://github.com/error404sushant/claude-ide.git
 cd claude-ide
-./build-app.sh                         # → VSCode-darwin-arm64/Claude IDE.app
+./build-app.sh                         # → VSCode-darwin-arm64/Claude IDE.app + DMG/ZIP in release/
 ```
 
-The first run downloads the exact VS Code (Code - OSS 1.140.0) source these patches were written for, installs dependencies and builds, which takes roughly 20 to 40 minutes. `build-app.sh` runs `apply-fork.sh` (branding, icon, default layout and theme, the review UI and drop handling in `fork-patches/`, and the built-in extension), builds with `gulp vscode-darwin-arm64-min`, and signs the app ad-hoc so macOS can grant it microphone access.
+**Windows (x64 or ARM64)**: Visual Studio 2022 with *Desktop development with C++*, Node 24, Python 3, Git (`git config --global core.longpaths true`).
+
+```powershell
+git clone https://github.com/error404sushant/claude-ide.git
+cd claude-ide
+node scripts/build.mjs --package        # → VSCode-win32-x64\ + Claude-IDE-…-Windows-x64-Setup.exe in release\
+```
+
+Windows builds also run automatically on GitHub (**Actions → Build Windows**), including a launch test, so you don't need a Windows PC to produce the installer.
+
+`scripts/build.mjs` runs `scripts/apply-fork.mjs` (branding, icons, default layout and theme, the review UI and drop handling in `fork-patches/`, and the built-in extension), builds with gulp, removes the unused Copilot components, and packages the app. `scripts/smoke-test.mjs` launches the result and checks that the Claude panel loads.
 
 **Only the extension:**
 
@@ -138,7 +150,9 @@ fork-patches/
   claudeReview.contribution.ts inline review UI in the editor core (removed-line zones, per-change buttons, floating bar)
                                and the chat drop handler
   brand/                       icon + watermark generator
-apply-fork.sh / build-app.sh   turn a Code - OSS checkout into Claude IDE
+scripts/                       build.mjs (macOS/Windows/Linux), apply-fork.mjs (patches), smoke-test.mjs (launch test)
+apply-fork.sh / build-app.sh   macOS shortcuts for the scripts above
+.github/workflows/             builds the Windows installers on GitHub
 docs/                          screenshots, demo video and its source
 ```
 

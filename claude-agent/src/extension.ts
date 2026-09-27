@@ -10,7 +10,6 @@ import { log, ReviewStore, registerReviewUi, snapshotWorkspace, recordBashChange
 type Mode = 'auto' | 'ask' | 'askBeforeEach' | 'plan';
 const SDK_MODE: Record<Mode, PermissionMode> = { auto: 'acceptEdits', ask: 'acceptEdits', askBeforeEach: 'default', plan: 'plan' };
 const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'Write', 'NotebookEdit']);
-const CLAUDE_HOME = path.join(os.homedir(), '.claude') + path.sep;
 const IMAGE_TYPES: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' };
 type Image = { name: string; mediaType: string; data: string };
 
@@ -24,13 +23,26 @@ async function* withImages(text: string, images: Image[]): AsyncGenerator<SDKUse
 const cfg = () => vscode.workspace.getConfiguration('claudeIde');
 const sdk = () => import('@anthropic-ai/claude-agent-sdk');
 
+const isWin = process.platform === 'win32';
+/** VS Code writes Windows drive letters in lowercase (c:\\); Claude reports C:\\. Match VS Code so paths compare equal. */
+const normPath = (p: string) => (isWin ? p.replace(/^[A-Z]:/, d => d.toLowerCase()) : p);
+const pathKey = () => Object.keys(process.env).find(k => k.toUpperCase() === 'PATH') ?? 'PATH';   // "Path" on Windows
+const CLAUDE_HOME = normPath(path.join(os.homedir(), '.claude') + path.sep);
+
+function findOnPath(name: string) {
+  for (const dir of (process.env[pathKey()] ?? '').split(path.delimiter)) {
+    const p = dir && path.join(dir, name);
+    if (p && fs.existsSync(p)) return p;
+  }
+}
+
 function findClaude(): string | undefined {
   const configured = cfg().get<string>('claudePath');
   if (configured) return configured;
-  const home = os.homedir();
-  // GUI-launched editors often lack the shell PATH, so probe the usual install locations.
-  return [path.join(home, '.local/bin/claude'), path.join(home, '.claude/local/claude'), '/opt/homebrew/bin/claude', '/usr/local/bin/claude']
-    .find(p => fs.existsSync(p));
+  const home = os.homedir(), exe = isWin ? 'claude.exe' : 'claude';
+  // GUI-launched editors often lack the shell PATH, so probe the usual install locations first.
+  const known = [path.join(home, '.local', 'bin', exe), path.join(home, '.claude', 'local', exe), ...(isWin ? [] : ['/opt/homebrew/bin/claude', '/usr/local/bin/claude'])];
+  return known.find(p => fs.existsSync(p)) ?? findOnPath(exe);
 }
 
 const shortInput = (name: string, input: any, cwd: string): string => {
@@ -110,9 +122,9 @@ class ChatProvider implements vscode.WebviewViewProvider {
    * symlink (/tmp/x). Map tool paths back into the workspace's form so the review UI matches open editors.
    */
   private toWorkspacePath(p: string) {
-    const abs = path.resolve(this.cwd, p);
+    const abs = normPath(path.resolve(this.cwd, p));
     let real: string;
-    try { real = fs.realpathSync(this.cwd); } catch { return abs; }
+    try { real = normPath(fs.realpathSync(this.cwd)); } catch { return abs; }
     return real !== this.cwd && (abs === real || abs.startsWith(real + path.sep)) ? this.cwd + abs.slice(real.length) : abs;
   }
   private post(msg: any) { void this.view?.webview.postMessage(msg); }
@@ -206,7 +218,9 @@ class ChatProvider implements vscode.WebviewViewProvider {
   trusted() { this.post({ type: 'trust', ok: true }); void this.loadCommands(); }
 
   private async agentEnv() {
-    const env: Record<string, string | undefined> = { ...process.env, PATH: [path.join(os.homedir(), '.local/bin'), '/opt/homebrew/bin', '/usr/local/bin', process.env.PATH].join(':') };
+    const extra = isWin ? [path.join(os.homedir(), '.local', 'bin')] : [path.join(os.homedir(), '.local', 'bin'), '/opt/homebrew/bin', '/usr/local/bin'];
+    const key = pathKey();
+    const env: Record<string, string | undefined> = { ...process.env, [key]: [...extra, process.env[key]].filter(Boolean).join(path.delimiter) };
     if (cfg().get('authMode') === 'apiKey') env.ANTHROPIC_API_KEY = await this.ctx.secrets.get('claudeIde.apiKey');
     return env;
   }
@@ -258,10 +272,9 @@ class ChatProvider implements vscode.WebviewViewProvider {
   }
 
   signIn() {
-    const bin = findClaude() ?? 'claude';
-    const t = vscode.window.createTerminal({ name: 'Claude sign-in', cwd: this.cwd });
+    // Run claude itself as the terminal process: no shell quoting differences between zsh, PowerShell and cmd.
+    const t = vscode.window.createTerminal({ name: 'Claude sign-in', cwd: this.cwd, shellPath: findClaude() ?? (isWin ? 'claude.exe' : 'claude'), shellArgs: ['/login'] });
     t.show();
-    t.sendText(`"${bin}" /login`);
   }
 
   newChat() {
@@ -323,7 +336,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
   addFiles(uris: string[]) {
     log.info(`addFiles ${JSON.stringify(uris)}`);
     for (const u of uris) {
-      const p = /^[a-z][\w+.-]*:/i.test(u) ? vscode.Uri.parse(u).fsPath : u;
+      const p = /^[a-z][\w+.-]+:/i.test(u) ? vscode.Uri.parse(u).fsPath : u;   // URI (not a C:\ path)
       if (!fs.existsSync(p)) continue;
       const isDir = fs.statSync(p).isDirectory();
       const mediaType = IMAGE_TYPES[path.extname(p).toLowerCase()];

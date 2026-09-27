@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude IDE — AI code editor where every change waits for your review</title>
-<meta name="description" content="Claude IDE is a free, open-source AI code editor for macOS: a VS Code fork with a built-in Claude agent. Review every AI edit inline, accept or reject each change, drag files and screenshots into chat. A Cursor-style alternative.">
-<meta name="keywords" content="Claude IDE, AI code editor, AI IDE, VS Code fork, Cursor alternative, Claude agent, inline diff review, accept reject AI changes, AI coding assistant, macOS code editor, open source IDE">
+<title>Claude IDE: Preview, Accept &amp; Reject Claude Code File Changes Inline</title>
+<meta name="description" content="Preview Claude Code file changes before you keep them. Claude IDE is a free, open-source code editor (VS Code fork) that shows every Claude Code edit inline, old code in red, with Accept and Reject on each change, file by file. A Cursor-style alternative for macOS.">
+<meta name="keywords" content="Claude Code file changes preview, accept reject Claude Code changes, review Claude Code edits, Claude Code diff, Claude Code inline diff, undo Claude Code changes, Claude IDE, AI code editor, AI IDE, VS Code fork, Cursor alternative, Claude agent, inline diff review, accept reject AI changes, AI coding assistant, macOS code editor, open source IDE">
 <meta name="author" content="error404sushant">
 <link rel="canonical" href="https://error404sushant.github.io/claude-ide/">
 <link rel="icon" type="image/png" href="images/icon.png">
@@ -13,14 +13,14 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Claude IDE">
-<meta property="og:title" content="Claude IDE — AI code editor where every change waits for your review">
+<meta property="og:title" content="Claude IDE: Preview, accept and reject Claude Code file changes inline">
 <meta property="og:description" content="A VS Code fork with a built-in Claude agent. Old code in red, accept or reject every change, drag files and screenshots into chat. Free and open source.">
 <meta property="og:url" content="https://error404sushant.github.io/claude-ide/">
 <meta property="og:image" content="https://error404sushant.github.io/claude-ide/claude-ide-demo-poster.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Claude IDE — AI code editor where every change waits for your review">
+<meta name="twitter:title" content="Claude IDE: Preview, accept and reject Claude Code file changes inline">
 <meta name="twitter:description" content="A VS Code fork with a built-in Claude agent. Review every AI edit inline, accept or reject each change. Free and open source.">
 <meta name="twitter:image" content="https://error404sushant.github.io/claude-ide/claude-ide-demo-poster.jpg">
 
@@ -41,6 +41,70 @@
   "screenshot": "https://error404sushant.github.io/claude-ide/images/02-review.png",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": { "@type": "Person", "name": "error404sushant", "url": "https://github.com/error404sushant" }
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "How do I preview Claude Code file changes before keeping them?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Open your project in Claude IDE and use Ask mode. Claude Code edits the files, and every change is shown inline in the editor: removed lines in red, new lines in green. Nothing is final until you click Accept."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How do I accept or reject Claude Code changes one by one?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Each change has its own Accept and Reject buttons (⌥⏎ and ⇧⌥⌫). A floating bar shows 1 of N and moves between changes and files; Accept File (⌘⏎) and Reject File (⌘⌫) handle a whole file, and Accept all / Reject all handle everything."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How do I see a diff of Claude Code edits in VS Code?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Claude IDE shows the diff directly inside the file you are editing, with the old code in red above the new code. You can also open a side-by-side diff for any changed file from the Claude Changes list."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I undo all changes Claude Code made?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. Reject all restores every file to its exact original bytes and removes files Claude created. Restore to here on any message undoes everything from that point on."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does it catch changes Claude Code makes with shell commands?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. Files changed by commands such as sed -i, code generators or formatters are added to the same review stack as normal edits."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What is Claude IDE?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "An open-source AI code editor for macOS: a fork of Code - OSS (the open-source core of VS Code) with a Claude agent panel and an inline review system for every change the AI makes."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is Claude IDE free?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, the editor is free and open source. It uses your existing Claude account or an API key for the AI itself."
+   }
+  }
+ ]
 }
 </script>
 
@@ -124,7 +188,7 @@
 <header class="hero">
   <div class="wrap">
     <h1>The AI code editor where<br><span class="accent">every change waits for you.</span></h1>
-    <p class="lede">Claude IDE is a free, open-source code editor built on VS Code with a Claude agent built in. Claude writes the code; you see the old lines in red right inside the file and accept or reject each change.</p>
+    <p class="lede">Claude IDE is a free, open-source code editor built on VS Code with the Claude Code agent built in. <b>Preview every file change Claude Code makes</b>: the old lines in red right inside the file, with <b>Accept</b> and <b>Reject</b> on each change.</p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/error404sushant/claude-ide/releases/latest">Download for macOS</a>
       <a class="btn" href="https://github.com/error404sushant/claude-ide">View on GitHub</a>
@@ -137,7 +201,7 @@
 <main>
 <section id="features">
   <div class="wrap">
-    <h2>Review AI edits the way you review a pull request</h2>
+    <h2>Preview Claude Code file changes, then accept or reject them</h2>
     <p class="sub">Claude works freely. Every file it touches lands in a review stack, and nothing is final until you accept it.</p>
 
     <div class="row">
@@ -212,6 +276,11 @@ cd claude-ide
 <section id="faq">
   <div class="wrap">
     <h2>FAQ</h2>
+    <details><summary>How do I preview Claude Code file changes before keeping them?</summary><p>Open your project in Claude IDE and use Ask mode. Claude Code edits the files, and every change is shown inline in the editor: removed lines in red, new lines in green. Nothing is final until you click Accept.</p></details>
+    <details><summary>How do I accept or reject Claude Code changes one by one?</summary><p>Each change has its own Accept and Reject buttons (⌥⏎ and ⇧⌥⌫). A floating bar shows 1 of N and moves between changes and files; Accept File (⌘⏎) and Reject File (⌘⌫) handle a whole file, and Accept all / Reject all handle everything.</p></details>
+    <details><summary>How do I see a diff of Claude Code edits in VS Code?</summary><p>Claude IDE shows the diff directly inside the file you are editing, with the old code in red above the new code. You can also open a side-by-side diff for any changed file from the Claude Changes list.</p></details>
+    <details><summary>Can I undo all changes Claude Code made?</summary><p>Yes. Reject all restores every file to its exact original bytes and removes files Claude created. Restore to here on any message undoes everything from that point on.</p></details>
+    <details><summary>Does it catch changes Claude Code makes with shell commands?</summary><p>Yes. Files changed by commands such as sed -i, code generators or formatters are added to the same review stack as normal edits.</p></details>
     <details><summary>What is Claude IDE?</summary><p>An open-source AI code editor for macOS. It's a fork of Code - OSS (the open-source core of VS Code) with a Claude agent panel and an inline review system for every change the AI makes.</p></details>
     <details><summary>Is Claude IDE free?</summary><p>Yes, the editor is free and open source. It uses your existing Claude account or an API key for the AI itself.</p></details>
     <details><summary>Is it a Cursor alternative?</summary><p>Yes. Like Cursor, it lets the AI edit freely and then shows every change inline with Accept and Reject buttons, but it runs the Claude agent with its full set of tools.</p></details>

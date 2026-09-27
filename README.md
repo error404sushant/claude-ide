@@ -5,8 +5,9 @@
 <h1 align="center">Claude IDE</h1>
 
 <p align="center">
-  <b>A VS Code (Code - OSS) fork with the real Claude Code agent built in, where every change Claude makes waits for your review, inline.</b><br>
-  Created by <a href="https://github.com/error404sushant">error404sushant</a>
+  <b>Preview, accept and reject Claude Code file changes inline.</b><br>
+  A VS Code (Code - OSS) fork with the real Claude Code agent built in, where every change Claude makes waits for your review.<br>
+  <a href="https://error404sushant.github.io/claude-ide/">Website</a> · <a href="https://github.com/error404sushant/claude-ide/releases/latest">Download for macOS</a> · Created by <a href="https://github.com/error404sushant">error404sushant</a>
 </p>
 
 <p align="center">

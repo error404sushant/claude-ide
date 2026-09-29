@@ -86,19 +86,17 @@ export class ReviewStore {
     this.save();
   }
 
-  /** Undo every change made in `turn` and later turns. */
-  restoreTo(turn: string) {
-    const idx = this.checkpoints.findIndex(c => c.turn === turn);
-    if (idx < 0) return 0;
+  /** Undo every change made in these turns (a message and the ones after it). */
+  restoreTo(turns: string[]) {
+    const ids = new Set(turns);
     const restore = new Map<string, string | null>();
-    for (const cp of this.checkpoints.slice(idx))
+    for (const cp of this.checkpoints.filter(c => ids.has(c.turn)))   // oldest first: the earliest pre-image wins
       for (const [p, c] of Object.entries(cp.files)) if (!restore.has(p)) restore.set(p, c);
     for (const [p, c] of restore) write(p, c);
-    this.checkpoints = this.checkpoints.slice(0, idx);
+    this.checkpoints = this.checkpoints.filter(c => !ids.has(c.turn));
     this.save();
     return restore.size;
   }
-  hasCheckpoint(turn: string) { return this.checkpoints.some(c => c.turn === turn); }
 
   /** Drops files whose disk content equals the baseline. */
   prune() {

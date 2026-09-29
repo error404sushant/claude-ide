@@ -2,7 +2,7 @@
   "name": "claude-agent",
   "displayName": "Claude Agent",
   "description": "Claude Code agent panel with inline review of every change, plus the Claude IDE Dark theme",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "local",
   "license": "MIT",
   "private": true,

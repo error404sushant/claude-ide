@@ -284,7 +284,14 @@ function newTurn(text, turn, images = [], refs = []) {
   const msg = h('div', { class: 'user' }, h('div', { class: 'bubble' }, text,
     refs.length ? h('div', { class: 'thumbs' }, ...refs.map(r => h('a', { class: 'chip', 'data-file': r.replace(/\/$/, '') }, (r.endsWith('/') ? '📁 ' : '📄 ') + r))) : null,
     images.length ? h('div', { class: 'thumbs' }, ...images.map(i => h('img', { src: `data:${i.mediaType};base64,${i.data}` }))) : null));
-  if (turn) msg.append(h('button', { class: 'link restore', title: 'Undo all file changes from this message on', onclick: () => send('restore', { turn }) }, '↺ Restore to here'));
+  if (turn) {
+    t.dataset.turn = turn;
+    t.prompt = { text, images, refs };
+    msg.append(h('button', { class: 'link restore', title: 'Undo file changes from this message on and edit this message again', onclick: () => {
+      const all = [...log.querySelectorAll('section.turn')];
+      send('restore', { turns: all.slice(all.indexOf(t)).map(s => s.dataset.turn).filter(Boolean) });
+    } }, '↺ Restore to here'));
+  }
   t.append(msg, h('div', { class: 'steps' }));
   log.append(t);
   S.turn = t; S.stream = null;
@@ -522,6 +529,25 @@ window.addEventListener('message', ({ data: m }) => {
     case 'reset': log.replaceChildren(); S.turn = null; S.stream = null; $('#title').textContent = m.title; toggleHistory(false); showEmpty(); break;
     case 'title': $('#title').textContent = m.text; break;
     case 'user': newTurn(m.text, m.turn, m.images, m.refs); if (m.title) $('#title').textContent = m.title; scroll(); break;
+    case 'rewound': {
+      // Drop the restored message and everything after it; put the message back in the input to edit and resend.
+      const t = [...log.querySelectorAll('section.turn')].find(s => s.dataset.turn === m.turn);
+      if (!t) break;
+      const { text, images, refs } = t.prompt;
+      while (t.nextSibling) t.nextSibling.remove();
+      t.remove();
+      S.turn = null; S.stream = null;
+      const input = $('#input');
+      input.value = text;
+      autosize();
+      S.images = [...images];
+      S.refs = refs.map(r => ({ path: r, name: r.replace(/\/$/, '').split('/').pop(), isDir: r.endsWith('/') }));
+      renderAttachments();
+      input.focus();
+      if (log.querySelector('section.turn')) log.append(h('div', { class: 'step muted note' }, m.files ? `Restored ${m.files} file${m.files > 1 ? 's' : ''}.` : 'No files needed restoring.'));
+      else showEmpty();
+      break;
+    }
     case 'busy': setBusy(m.value); break;
     case 'delta': delta(m.text); break;
     case 'assistantText': assistantText(m.text); break;

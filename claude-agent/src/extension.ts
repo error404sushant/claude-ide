@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
+import { randomUUID } from 'crypto';
 import type { CanUseTool, HookCallback, Options, PermissionMode, PermissionResult, PreToolUseHookInput, Query, SDKMessage, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk' with { 'resolution-mode': 'import' };
 import { startRecording, stopRecording } from './voice';
 import { log, ReviewStore, registerReviewUi, snapshotWorkspace, recordBashChanges, WorkspaceSnapshot, proposed, PROPOSED_SCHEME } from './review';
@@ -13,12 +14,19 @@ const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'Write', 'NotebookEdit']);
 const IMAGE_TYPES: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' };
 type Image = { name: string; mediaType: string; data: string };
 
-/** A single user message with image blocks; the SDK's streaming-input form is the only way to send images. */
-async function* withImages(text: string, images: Image[]): AsyncGenerator<SDKUserMessage> {
+/** The prompt as one streamed user message: carries images, and our own uuid so "Restore to here" can find it in the transcript. */
+async function* userMessage(text: string, images: Image[], uuid: string): AsyncGenerator<SDKUserMessage> {
   yield {
-    type: 'user', parent_tool_use_id: null,
+    type: 'user', uuid, parent_tool_use_id: null,
     message: { role: 'user', content: [...images.map(i => ({ type: 'image' as const, source: { type: 'base64' as const, media_type: i.mediaType as 'image/png', data: i.data } })), { type: 'text' as const, text }] },
   } as SDKUserMessage;
+}
+/** Splits a transcript prompt back into what the user typed and the files they attached (see `send`). */
+function parsePrompt(text: string) {
+  let refs: string[] = [];
+  text = text.replace(/\n\n\(Attached: (.*)\)$/, (_, a: string) => { refs = a.split(' ').map(r => r.replace(/^@/, '')); return ''; });
+  text = text.replace(/\n\n\((Current file: @[^\n]*|Selection in @[\s\S]*)$/, '');
+  return { text, refs };
 }
 const cfg = () => vscode.workspace.getConfiguration('claudeIde');
 const sdk = () => import('@anthropic-ai/claude-agent-sdk');
@@ -107,6 +115,8 @@ class ChatProvider implements vscode.WebviewViewProvider {
   private bashSnaps = new Map<string, WorkspaceSnapshot>();
   private historyTimer?: NodeJS.Timeout;
   private autoResumed = false;
+  /** Set by "Restore to here": the next prompt continues the conversation from this transcript entry. */
+  private rewindTo?: string;
 
   constructor(private ctx: vscode.ExtensionContext, private store: ReviewStore, private ui: ReturnType<typeof registerReviewUi>) {
     store.onChange(() => this.postChanges());
@@ -166,10 +176,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
       case 'acceptAll': return vscode.commands.executeCommand('claudeIde.acceptAll');
       case 'rejectAll': return vscode.commands.executeCommand('claudeIde.rejectAll');
       case 'review': return vscode.commands.executeCommand('claudeIde.review');
-      case 'restore': {
-        const n = this.store.restoreTo(m.turn);
-        return vscode.window.showInformationMessage(`Restored ${n} file(s) to before that message.`);
-      }
+      case 'restore': return this.restore(m.turns);
       case 'micStart': {
         const err = await startRecording();
         return this.post(err ? { type: 'mic', state: 'idle', error: err } : { type: 'mic', state: 'recording' });
@@ -277,8 +284,28 @@ class ChatProvider implements vscode.WebviewViewProvider {
     t.show();
   }
 
+  /** "Restore to here": undo Claude's file changes from that message on, drop those messages, and put the prompt back in the input. */
+  private async restore(turns: string[]) {
+    const ok = await vscode.window.showWarningMessage('Restore to before this message?',
+      { modal: true, detail: 'Files Claude changed from this message on go back to how they were, and this message and the ones after it are removed. Your message goes back into the input box.' }, 'Restore');
+    if (ok !== 'Restore') return;
+    this.stop();
+    while (this.q) await new Promise(r => setTimeout(r, 50));
+    const n = this.store.restoreTo(turns);
+    if (this.sessionId) {
+      const { getSessionMessages } = await sdk();
+      const msgs = await getSessionMessages(this.sessionId, { dir: this.cwd });
+      const i = msgs.findIndex(m => m.uuid === turns[0]);
+      if (i === 0) { this.sessionId = undefined; this.rewindTo = undefined; }   // first message: start over
+      else if (i > 0) this.rewindTo = msgs[i - 1].uuid;
+    }
+    log.info(`restore ${turns[0]}: ${n} file(s), rewind to ${this.rewindTo ?? (this.sessionId ? 'unchanged' : 'new chat')}`);
+    this.post({ type: 'rewound', turn: turns[0], files: n });
+  }
+
   newChat() {
     this.stop();
+    this.rewindTo = undefined;
     this.sessionId = undefined;
     this.title = 'New chat';
     this.post({ type: 'reset', title: this.title });
@@ -310,6 +337,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
     const msgs = await getSessionMessages(id, { dir: this.cwd });
     const info = (await listSessions({ dir: this.cwd })).find(s => s.sessionId === id);
     this.sessionId = id;
+    this.rewindTo = undefined;
     this.title = (info?.customTitle || info?.summary || info?.firstPrompt || 'Chat').slice(0, 60);
     this.post({ type: 'reset', title: this.title });
     // Very long conversations (hundreds of MB) would freeze the panel; show the latest part. Claude still has the full history.
@@ -456,7 +484,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
 
     if (refs.length) prompt += `\n\n(Attached: ${refs.map(r => '@' + r).join(' ')})`;
 
-    this.turn = `${Date.now()}`;
+    this.turn = randomUUID();
     if (!this.sessionId) this.title = text.slice(0, 60);
     this.post({ type: 'user', text, turn: this.turn, title: this.title, images, refs });
 
@@ -467,6 +495,7 @@ class ChatProvider implements vscode.WebviewViewProvider {
       model: this.model,
       effort: this.effort as Options['effort'],
       resume: this.sessionId,
+      resumeSessionAt: this.sessionId ? this.rewindTo : undefined,
       systemPrompt: { type: 'preset', preset: 'claude_code' },
       settingSources: ['user', 'project', 'local'],
       permissionMode: SDK_MODE[this.mode],
@@ -483,7 +512,8 @@ class ChatProvider implements vscode.WebviewViewProvider {
     const started = Date.now();
     this.post({ type: 'busy', value: true });
     try {
-      this.q = query({ prompt: images.length ? withImages(prompt, images) : prompt, options });
+      this.rewindTo = undefined;
+      this.q = query({ prompt: userMessage(prompt, images, this.turn), options });
       for await (const m of this.q) this.render(m);
     } catch (e: any) {
       this.post({ type: 'done', error: this.abort.signal.aborted ? 'Stopped' : String(e?.message ?? e), durationMs: Date.now() - started });
@@ -529,14 +559,13 @@ class ChatProvider implements vscode.WebviewViewProvider {
         }
         return;
       case 'user': {
-        const content = m.message?.content;
-        if (typeof content === 'string') {
-          if (replay && !sub && !content.startsWith('<')) this.post({ type: 'user', text: content });
-          return;
-        }
-        for (const b of content ?? []) {
-          if (b.type === 'tool_result') this.post({ type: 'toolResult', id: b.tool_use_id, output: toolOutput(b.content).slice(0, 20000), isError: !!b.is_error });
-          else if (replay && !sub && b.type === 'text' && !b.text.startsWith('<')) this.post({ type: 'user', text: b.text });
+        const content = typeof m.message?.content === 'string' ? [{ type: 'text', text: m.message.content }] : m.message?.content ?? [];
+        for (const b of content) if (b.type === 'tool_result') this.post({ type: 'toolResult', id: b.tool_use_id, output: toolOutput(b.content).slice(0, 20000), isError: !!b.is_error });
+        const text = content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n');
+        if (replay && !sub && text && !text.startsWith('<')) {
+          const images = content.filter((b: any) => b.type === 'image' && b.source?.type === 'base64')
+            .map((b: any) => ({ name: 'image', mediaType: b.source.media_type, data: b.source.data }));
+          this.post({ type: 'user', turn: m.uuid, images, ...parsePrompt(text) });
         }
         return;
       }

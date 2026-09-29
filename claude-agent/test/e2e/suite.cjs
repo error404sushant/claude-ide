@@ -79,9 +79,18 @@ exports.run = async () => {
   await chat.send('Using the Edit tool add a line `X` at the end of b.txt. Do nothing else.', false);
   const turn = posts.filter(m => m.type === 'user').pop().turn;
   await vscode.commands.executeCommand('claudeIde.acceptAll');
-  assert.ok(store.restoreTo(turn) >= 1);
+  const warn = vscode.window.showWarningMessage;
+  vscode.window.showWarningMessage = async () => 'Restore';
+  await chat.onMessage({ type: 'restore', turns: [turn] });
+  vscode.window.showWarningMessage = warn;
   assert.equal(hash(p('b.txt')), orig['b.txt']);
+  assert.ok(posts.some(m => m.type === 'rewound' && m.turn === turn && m.files === 1));
   step('checkpoint: Restore to here undoes even accepted changes from that turn on');
+  await chat.send('Reply with only the word OK.', false);
+  const { getSessionMessages } = await import('@anthropic-ai/claude-agent-sdk');
+  const chain = (await getSessionMessages(chat.sessionId, { dir: ws })).map(m => m.uuid);
+  assert.ok(!chain.includes(turn) && chain.length > 0, 'restored message dropped from the conversation');
+  step('Restore to here also removes that message and later ones from Claude\'s context');
 
   const running = chat.send('Write a 2000 word essay into essay.txt using the Write tool, one paragraph at a time with separate Edit calls.', false);
   await new Promise(r => setTimeout(r, 8000));
